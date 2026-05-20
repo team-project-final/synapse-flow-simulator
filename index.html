@@ -170,7 +170,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 
 <div class="app">
   <!-- Header -->
-  <div class="header">
+  <header class="header" role="banner">
     <button class="hamburger" onclick="toggleSidebar()" title="메뉴" aria-label="사이드바 메뉴 열기/닫기"><i class="ti ti-menu-2"></i></button>
     <div class="logo"><span>Synapse</span> Flow Simulator</div>
     <div class="view-tabs">
@@ -189,35 +189,35 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
       <div class="sep"></div>
       <button onclick="resetSteps()" title="처음으로" aria-label="처음으로"><i class="ti ti-player-skip-back"></i></button>
     </div>
-  </div>
+  </header>
 
   <!-- Sidebar -->
-  <div class="sidebar" id="sidebar"></div>
+  <nav class="sidebar" id="sidebar" role="navigation" aria-label="시나리오 목록"></nav>
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
   <!-- Main View -->
-  <div class="main-view" id="main-view">
+  <main class="main-view" id="main-view" role="main">
     <div class="empty-state" id="empty-state">
       <i class="ti ti-topology-star-3"></i>
       <p>왼쪽에서 시나리오를 선택하세요</p>
       <p style="font-size:12px;max-width:320px;text-align:center;line-height:1.6;margin-top:4px">인증, AI, 장애 복구, GitOps 등 18개 시나리오의<br>아키텍처 흐름을 시각적으로 탐색할 수 있습니다</p>
     </div>
-  </div>
+  </main>
 
   <!-- Detail Panel -->
-  <div class="detail-panel" id="detail-panel">
+  <aside class="detail-panel" id="detail-panel" role="complementary" aria-label="시나리오 상세">
     <div id="detail-content">
       <div class="empty-state" style="height:auto;padding:40px 0">
         <i class="ti ti-info-circle" style="font-size:28px"></i>
         <p style="font-size:12px">시나리오를 선택하면 상세 정보가 표시됩니다</p>
       </div>
     </div>
-  </div>
+  </aside>
 
   <!-- Log Panel -->
-  <div class="log-panel" id="log-panel">
+  <footer class="log-panel" id="log-panel" role="log" aria-label="실행 로그">
     <div style="color:var(--text-dim);font-size:11px">[ Synapse Flow Simulator — 로그 패널 ]</div>
-  </div>
+  </footer>
 </div>
 
 <script>
