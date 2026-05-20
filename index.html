@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synapse Flow Simulator</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg-secondary:#161b22;--bg-tertiary:#1c2128;--bg-card:#21262d;
+  --border:#30363d;--text:#e6edf3;--text-muted:#8b949e;--text-dim:#484f58;
+  --blue:#3b82f6;--teal:#14b8a6;--coral:#f97316;--amber:#f59e0b;--pink:#ec4899;
+  --purple:#9333ea;--red:#ef4444;--green:#22c55e;--gray:#6b7280;--cyan:#06b6d4;
+  --sidebar-w:220px;--detail-w:280px;--log-h:140px;--header-h:48px;
+}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(--text)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* Layout */
+.app{display:grid;height:100vh;grid-template-rows:var(--header-h) 1fr var(--log-h);grid-template-columns:var(--sidebar-w) 1fr var(--detail-w)}
+.header{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border);z-index:10}
+.sidebar{grid-row:2;overflow-y:auto;background:var(--bg-secondary);border-right:1px solid var(--border);padding:8px 0}
+.main-view{grid-row:2;position:relative;overflow:hidden;background:var(--bg)}
+.detail-panel{grid-row:2;overflow-y:auto;background:var(--bg-secondary);border-left:1px solid var(--border);padding:12px}
+.log-panel{grid-column:1/-1;grid-row:3;overflow-y:auto;background:#0a0d12;border-top:1px solid var(--border);padding:8px 12px;font-family:'Cascadia Code','Fira Code',monospace;font-size:12px;line-height:1.6}
+
+/* Header */
+.header .logo{font-weight:700;font-size:15px;white-space:nowrap}
+.header .logo span{color:var(--blue)}
+.hamburger{display:none;font-size:20px;padding:4px}
+.nav-controls{display:flex;align-items:center;gap:6px;margin-left:auto}
+.nav-controls button{padding:5px 10px;border-radius:6px;font-size:13px;font-weight:500;background:var(--bg-card);border:1px solid var(--border);transition:.15s}
+.nav-controls button:hover{background:var(--border)}
+.nav-controls button.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.nav-controls .sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.step-info{font-size:12px;color:var(--text-muted);min-width:80px;text-align:center}
+.speed-btn{font-size:11px!important;padding:3px 6px!important}
+.speed-btn.active{background:var(--purple)!important;border-color:var(--purple)!important}
+
+/* Sidebar */
+.sidebar .cat-group{margin-bottom:4px}
+.sidebar .cat-header{padding:8px 12px 4px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);display:flex;align-items:center;gap:6px}
+.sidebar .cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sidebar .sc-item{padding:6px 12px 6px 28px;font-size:12.5px;cursor:pointer;border-left:3px solid transparent;transition:.12s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted)}
+.sidebar .sc-item:hover{background:var(--bg-tertiary);color:var(--text)}
+.sidebar .sc-item.active{background:var(--bg-tertiary);color:var(--text);border-left-color:var(--blue);font-weight:500}
+.sidebar .sc-item .status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px}
+.status-implemented{background:var(--green)}
+.status-partial{background:var(--amber)}
+.status-w3_pending{background:var(--text-dim)}
+
+/* View Tabs */
+.view-tabs{display:flex;gap:2px;background:var(--bg-tertiary);border-radius:8px;padding:2px}
+.view-tabs button{padding:4px 12px;border-radius:6px;font-size:12px;font-weight:500;transition:.15s}
+.view-tabs button.active{background:var(--blue);color:#fff}
+
+/* Detail Panel */
+.detail-panel h3{font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px}
+.detail-panel .section{margin-bottom:16px}
+.detail-panel .step-title{font-size:14px;font-weight:600;margin-bottom:6px}
+.detail-panel .step-type{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin-bottom:8px}
+.detail-panel .step-action{font-size:13px;color:var(--text-muted);margin-bottom:8px;word-break:break-all}
+.detail-panel .payload-block{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;font-family:monospace;font-size:11px;line-height:1.5;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto}
+.detail-panel .annotation{display:flex;align-items:flex-start;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:4px}
+.detail-panel .annotation::before{content:'\25B6';font-size:8px;color:var(--amber);margin-top:3px;flex-shrink:0}
+.detail-panel .branch-section{margin-top:8px}
+.detail-panel .branch-item{display:block;padding:6px 8px;margin-bottom:4px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;transition:.15s;width:100%;text-align:left}
+.detail-panel .branch-item:hover{border-color:var(--blue)}
+.detail-panel .branch-item.failure{border-left:3px solid var(--red)}
+.detail-panel .branch-item.alternate{border-left:3px solid var(--amber)}
+.detail-panel .branch-item .trigger{font-weight:500;margin-bottom:2px}
+.detail-panel .branch-item .result{color:var(--text-muted);font-size:11px}
+.detail-panel .branch-detail{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;margin-top:8px;font-size:12px}
+.detail-panel .branch-detail .status-code{font-weight:700;color:var(--red)}
+.detail-panel .tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.detail-panel .tag{padding:1px 6px;border-radius:3px;font-size:10px;background:var(--bg-card);border:1px solid var(--border);color:var(--text-muted)}
+.detail-panel .scenario-desc{font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5}
+
+/* Architecture View */
+.arch-view{width:100%;height:100%;position:relative}
+.arch-view svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2}
+.arch-actors{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;padding:20px}
+.actor-box{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 14px;border-radius:10px;background:var(--bg-card);border:2px solid var(--border);min-width:100px;text-align:center;transition:transform .3s,box-shadow .3s,border-color .3s;cursor:default;z-index:3}
+.actor-box .actor-icon{font-size:22px;margin-bottom:4px}
+.actor-box .actor-label{font-size:11px;font-weight:600;white-space:nowrap}
+.actor-box .actor-kind{font-size:9px;color:var(--text-muted);margin-top:1px}
+.actor-box.active{transform:scale(1.05);animation:glowPulse 2s ease-in-out infinite}
+.actor-box.from-active{border-width:2px}
+.actor-box.to-active{border-width:2px}
+
+/* Sequence View */
+.seq-view{width:100%;height:100%;overflow-y:auto;overflow-x:auto;position:relative;padding:0 20px}
+.seq-header{display:flex;position:sticky;top:0;background:var(--bg);z-index:5;padding:12px 0;border-bottom:1px solid var(--border)}
+.seq-actor-col{display:flex;flex-direction:column;align-items:center;min-width:120px;flex:1}
+.seq-actor-col .seq-actor-box{padding:6px 10px;border-radius:8px;background:var(--bg-card);border:2px solid var(--border);text-align:center;font-size:11px;font-weight:600;white-space:nowrap}
+.seq-lifeline-area{position:relative;min-height:200px}
+.seq-lifelines{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1}
+.seq-messages{position:relative;z-index:2;padding-top:8px}
+.seq-msg-row{display:flex;align-items:center;position:relative;height:40px;margin-bottom:2px;transition:opacity .3s}
+.seq-msg-row.future{opacity:.2}
+.seq-msg-row.current{opacity:1}
+.seq-msg-row .msg-label{position:absolute;font-size:10px;white-space:nowrap;padding:1px 5px;border-radius:3px;background:rgba(13,17,23,.85);z-index:3;transform:translateY(-14px)}
+.seq-msg-row .msg-n{position:absolute;left:-18px;font-size:10px;color:var(--text-dim);width:16px;text-align:right}
+.seq-arrow-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+
+/* Log */
+.log-entry{color:var(--text-muted)}
+.log-entry .log-n{color:var(--text-dim);margin-right:8px}
+.log-entry .log-time{color:var(--text-dim);margin-right:8px}
+.log-entry .log-dir{font-weight:700;margin-right:4px}
+.log-entry .log-dir.req{color:var(--blue)}
+.log-entry .log-dir.res{color:var(--green)}
+.log-entry .log-dir.evt{color:var(--purple)}
+.log-entry .log-dir.err{color:var(--red)}
+.log-entry .log-action{color:var(--text)}
+
+/* Animations */
+@keyframes glowPulse{0%,100%{box-shadow:0 0 8px 2px var(--glow-color)}50%{box-shadow:0 0 20px 6px var(--glow-color)}}
+@keyframes arrowTravel{0%{offset-distance:0%}100%{offset-distance:100%}}
+@keyframes shake{0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-3px)}20%,40%,60%,80%{transform:translateX(3px)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes dashMove{to{stroke-dashoffset:-20}}
+
+.shake{animation:shake .5s ease-in-out}
+.arrow-dot{animation:arrowTravel 1s linear infinite}
+
+/* Step type colors */
+.type-http_request{background:rgba(59,130,246,.15);color:var(--blue);border:1px solid rgba(59,130,246,.3)}
+.type-http_response{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.type-error{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.type-kafka_publish,.type-kafka_consume{background:rgba(147,51,234,.15);color:var(--purple);border:1px solid rgba(147,51,234,.3)}
+.type-db_query{background:rgba(107,114,128,.15);color:var(--gray);border:1px solid rgba(107,114,128,.3)}
+.type-internal{background:rgba(107,114,128,.1);color:var(--text-dim);border:1px solid rgba(107,114,128,.2)}
+.type-external_api{background:rgba(249,115,22,.15);color:var(--coral);border:1px solid rgba(249,115,22,.3)}
+.type-cache_op{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.type-k8s_event{background:rgba(6,182,212,.15);color:var(--cyan);border:1px solid rgba(6,182,212,.3)}
+.type-git_op{background:rgba(249,115,22,.15);color:var(--coral);border:1px solid rgba(249,115,22,.3)}
+.type-sync_op{background:rgba(20,184,166,.15);color:var(--teal);border:1px solid rgba(20,184,166,.3)}
+
+/* Responsive */
+@media(max-width:900px){
+  .sidebar{position:fixed;left:0;top:var(--header-h);bottom:0;width:var(--sidebar-w);z-index:20;transform:translateX(-100%);transition:transform .25s}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay{display:none;position:fixed;inset:0;top:var(--header-h);background:rgba(0,0,0,.5);z-index:19}
+  .sidebar-overlay.open{display:block}
+  .hamburger{display:block}
+  .app{grid-template-columns:0 1fr var(--detail-w)}
+  .detail-panel{--detail-w:240px}
+}
+@media(max-width:700px){
+  .app{grid-template-columns:0 1fr 0}
+  .detail-panel{position:fixed;right:0;top:var(--header-h);bottom:var(--log-h);width:280px;z-index:18;transform:translateX(100%);transition:transform .25s}
+  .detail-panel.open{transform:translateX(0)}
+}
+
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-dim);gap:8px}
+.empty-state i{font-size:48px}
+.empty-state p{font-size:14px}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <button class="hamburger" onclick="toggleSidebar()" title="메뉴"><i class="ti ti-menu-2"></i></button>
+    <div class="logo"><span>Synapse</span> Flow Simulator</div>
+    <div class="view-tabs">
+      <button id="tab-arch" class="active" onclick="switchView('arch')">아키텍처 뷰</button>
+      <button id="tab-seq" onclick="switchView('seq')">시퀀스 뷰</button>
+    </div>
+    <div class="nav-controls">
+      <button id="btn-prev" onclick="prevStep()" title="이전 (←)"><i class="ti ti-chevron-left"></i></button>
+      <span class="step-info" id="step-info">- / -</span>
+      <button id="btn-next" onclick="nextStep()" title="다음 (→)"><i class="ti ti-chevron-right"></i></button>
+      <div class="sep"></div>
+      <button id="btn-play" onclick="togglePlay()" title="재생/정지 (Space)"><i class="ti ti-player-play"></i></button>
+      <button class="speed-btn" id="speed-1x" onclick="setSpeed(2000)">1x</button>
+      <button class="speed-btn" id="speed-2x" onclick="setSpeed(1000)">2x</button>
+      <button class="speed-btn" id="speed-05x" onclick="setSpeed(4000)">.5x</button>
+      <div class="sep"></div>
+      <button onclick="resetSteps()" title="처음으로"><i class="ti ti-player-skip-back"></i></button>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar"></div>
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Main View -->
+  <div class="main-view" id="main-view">
+    <div class="empty-state" id="empty-state">
+      <i class="ti ti-topology-star-3"></i>
+      <p>왼쪽에서 시나리오를 선택하세요</p>
+    </div>
+  </div>
+
+  <!-- Detail Panel -->
+  <div class="detail-panel" id="detail-panel">
+    <div id="detail-content">
+      <div class="empty-state" style="height:auto;padding:40px 0">
+        <i class="ti ti-info-circle" style="font-size:28px"></i>
+        <p style="font-size:12px">시나리오를 선택하면 상세 정보가 표시됩니다</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log Panel -->
+  <div class="log-panel" id="log-panel">
+    <div style="color:var(--text-dim);font-size:11px">[ Synapse Flow Simulator — 로그 패널 ]</div>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let data = null;
+let actorMap = {};
+let currentScenario = null;
+let currentStep = 0;
+let isPlaying = false;
+let playInterval = null;
+let playSpeed = 2000;
+let currentView = 'arch';
+let selectedBranch = null;
+
+// ── Color Maps ──
+const COLOR_MAP = {blue:'#3b82f6',teal:'#14b8a6',coral:'#f97316',amber:'#f59e0b',pink:'#ec4899',purple:'#9333ea',red:'#ef4444',green:'#22c55e',gray:'#6b7280',cyan:'#06b6d4'};
+const KIND_COLORS = {client:'#4a9eff',edge:'#9333ea',datastore:'#3b82f6',broker:'#f59e0b',external:'#6b7280',ops:'#f59e0b',k8s:'#3b82f6'};
+const TYPE_ARROW = {
+  http_request:{color:'#3b82f6',dash:'',width:2},
+  http_response:{color:'#22c55e',dash:'8,4',width:2},
+  error:{color:'#ef4444',dash:'4,4',width:2},
+  kafka_publish:{color:'#9333ea',dash:'',width:3},
+  kafka_consume:{color:'#9333ea',dash:'',width:3},
+  db_query:{color:'#6b7280',dash:'',width:1.5},
+  internal:{color:'#484f58',dash:'4,4',width:1.5},
+  external_api:{color:'#f97316',dash:'',width:2},
+  cache_op:{color:'#ef4444',dash:'',width:2},
+  k8s_event:{color:'#06b6d4',dash:'',width:2},
+  git_op:{color:'#f97316',dash:'',width:2},
+  sync_op:{color:'#14b8a6',dash:'',width:2}
+};
+
+function getActorColor(actor) {
+  if (actor.kind === 'service') return COLOR_MAP[actor.color] || '#3b82f6';
+  return KIND_COLORS[actor.kind] || '#6b7280';
+}
+
+// ── Init ──
+async function init() {
+  try {
+    const res = await fetch('data/scenarios.json');
+    data = await res.json();
+    data.actors.forEach(a => actorMap[a.id] = a);
+    renderSidebar();
+    updateSpeedButtons();
+  } catch(e) {
+    console.error('Failed to load scenarios:', e);
+    document.getElementById('empty-state').innerHTML = '<i class="ti ti-alert-triangle" style="font-size:48px;color:var(--red)"></i><p>데이터 로드 실패</p><p style="font-size:11px;color:var(--text-dim)">' + e.message + '</p>';
+  }
+}
+
+function renderSidebar() {
+  const sb = document.getElementById('sidebar');
+  let html = '';
+  data.categories.forEach(cat => {
+    const catColor = COLOR_MAP[cat.color] || '#6b7280';
+    html += `<div class="cat-group"><div class="cat-header"><span class="cat-dot" style="background:${catColor}"></span>${cat.label}</div>`;
+    const scenarios = data.scenarios.filter(s => s.category === cat.id);
+    scenarios.forEach(sc => {
+      html += `<div class="sc-item" data-id="${sc.id}" onclick="selectScenario('${sc.id}')"><span class="status-dot status-${sc.status}"></span>${sc.title}</div>`;
+    });
+    html += '</div>';
+  });
+  sb.innerHTML = html;
+}
+
+// ── Scenario Selection ──
+function selectScenario(id) {
+  const sc = data.scenarios.find(s => s.id === id);
+  if (!sc) return;
+  currentScenario = sc;
+  currentStep = 0;
+  selectedBranch = null;
+  stopPlay();
+  clearLog();
+  document.querySelectorAll('.sc-item').forEach(el => el.classList.toggle('active', el.dataset.id === id));
+  document.getElementById('empty-state')?.remove();
+  renderView();
+  renderDetail();
+  updateStepInfo();
+  logStep(0);
+  // close sidebar on mobile
+  if (window.innerWidth <= 900) toggleSidebar(false);
+}
+
+// ── View Switching ──
+function switchView(view) {
+  currentView = view;
+  document.getElementById('tab-arch').classList.toggle('active', view === 'arch');
+  document.getElementById('tab-seq').classList.toggle('active', view === 'seq');
+  if (currentScenario) renderView();
+}
+
+function renderView() {
+  if (!currentScenario) return;
+  if (currentView === 'arch') renderArchView();
+  else renderSeqView();
+}
+
+// ── Architecture View ──
+function renderArchView() {
+  const mv = document.getElementById('main-view');
+  const actors = getScenarioActors();
+  // Group by kind rows
+  const kindOrder = ['client','edge','service','ops','k8s','broker','datastore','external'];
+  const rows = {};
+  actors.forEach(a => {
+    const k = a.kind;
+    if (!rows[k]) rows[k] = [];
+    rows[k].push(a);
+  });
+  const orderedRows = kindOrder.filter(k => rows[k]).map(k => rows[k]);
+
+  const step = currentScenario.steps[currentStep];
+  const fromId = step?.from;
+  const toId = step?.to;
+
+  let html = '<div class="arch-view"><svg id="arch-svg"></svg><div class="arch-actors" id="arch-actors">';
+  const totalRows = orderedRows.length;
+  const positions = {};
+  const rect = mv.getBoundingClientRect();
+  const areaW = rect.width - 40;
+  const areaH = rect.height - 40;
+
+  orderedRows.forEach((row, ri) => {
+    const y = totalRows === 1 ? areaH / 2 : 30 + (ri / (totalRows - 1)) * (areaH - 100);
+    row.forEach((actor, ci) => {
+      const x = row.length === 1 ? areaW / 2 : 40 + (ci / (row.length - 1)) * (areaW - 140);
+      positions[actor.id] = { x: x + 50, y: y + 30 };
+      const color = getActorColor(actor);
+      const isFrom = actor.id === fromId;
+      const isTo = actor.id === toId;
+      const isActive = isFrom || isTo;
+      const cls = ['actor-box'];
+      if (isActive) cls.push('active');
+      if (isFrom) cls.push('from-active');
+      if (isTo) cls.push('to-active');
+      const glowColor = isActive ? color : 'transparent';
+      const borderColor = isActive ? color : 'var(--border)';
+      html += `<div class="${cls.join(' ')}" style="left:${x}px;top:${y}px;border-color:${borderColor};--glow-color:${color}40" data-actor="${actor.id}">
+        <i class="${actor.icon} actor-icon" style="color:${color}"></i>
+        <span class="actor-label">${actor.label}</span>
+        <span class="actor-kind">${actor.kind}</span>
+      </div>`;
+    });
+  });
+  html += '</div></div>';
+  mv.innerHTML = html;
+
+  // Draw arrow
+  requestAnimationFrame(() => drawArchArrow(step, positions));
+}
+
+function drawArchArrow(step, positions) {
+  if (!step) return;
+  const svg = document.getElementById('arch-svg');
+  if (!svg) return;
+  const from = positions[step.from];
+  const to = positions[step.to];
+  if (!from || !to) return;
+
+  const typeStyle = TYPE_ARROW[step.type] || TYPE_ARROW.internal;
+  const isSelf = step.from === step.to;
+
+  let pathD;
+  if (isSelf) {
+    pathD = `M ${from.x + 50} ${from.y} C ${from.x + 110} ${from.y - 40}, ${from.x + 110} ${from.y + 40}, ${from.x + 50} ${from.y}`;
+  } else {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const cx1 = from.x + dx * 0.3;
+    const cy1 = from.y + dy * 0.05;
+    const cx2 = from.x + dx * 0.7;
+    const cy2 = to.y - dy * 0.05;
+    pathD = `M ${from.x} ${from.y} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${to.x} ${to.y}`;
+  }
+
+  const markerId = 'arrowhead-' + step.type;
+  const isError = step.type === 'error';
+  let dashAttr = typeStyle.dash ? `stroke-dasharray="${typeStyle.dash}"` : '';
+  let animDash = '';
+  if (typeStyle.dash) {
+    animDash = `<animate attributeName="stroke-dashoffset" from="0" to="-20" dur="0.8s" repeatCount="indefinite"/>`;
+  }
+
+  svg.innerHTML = `
+    <defs>
+      <marker id="${markerId}" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="${typeStyle.color}"/>
+      </marker>
+    </defs>
+    <path d="${pathD}" fill="none" stroke="${typeStyle.color}" stroke-width="${typeStyle.width}" ${dashAttr}
+      marker-end="url(#${markerId})" opacity="0.8">${animDash}</path>
+    <circle r="4" fill="${typeStyle.color}" opacity="0.9">
+      <animateMotion dur="1.2s" repeatCount="indefinite" path="${pathD}"/>
+    </circle>
+    ${step.topic ? `<text x="${(from.x + to.x) / 2}" y="${(from.y + to.y) / 2 - 12}" text-anchor="middle" fill="${typeStyle.color}" font-size="10" font-weight="600" opacity="0.7">${step.topic.split('.').pop()}</text>` : ''}
+    <text x="${(from.x + to.x) / 2}" y="${(from.y + to.y) / 2 + (step.topic ? 4 : -6)}" text-anchor="middle" fill="var(--text-muted)" font-size="10" opacity="0.8">${escapeHtml(truncate(step.action, 40))}</text>
+  `;
+
+  if (isError) {
+    const fromBox = document.querySelector(`[data-actor="${step.from}"]`);
+    const toBox = document.querySelector(`[data-actor="${step.to}"]`);
+    [fromBox, toBox].forEach(b => { if (b) { b.classList.add('shake'); setTimeout(() => b.classList.remove('shake'), 600); }});
+  }
+}
+
+// ── Sequence View ──
+function renderSeqView() {
+  const mv = document.getElementById('main-view');
+  const actors = getScenarioActors();
+  const steps = currentScenario.steps;
+  const colW = Math.max(120, Math.min(160, (mv.getBoundingClientRect().width - 40) / actors.length));
+  const actorIdx = {};
+  actors.forEach((a, i) => actorIdx[a.id] = i);
+
+  let headerHtml = '<div class="seq-header" style="padding-left:24px">';
+  actors.forEach(a => {
+    const color = getActorColor(a);
+    headerHtml += `<div class="seq-actor-col" style="min-width:${colW}px;max-width:${colW}px">
+      <div class="seq-actor-box" style="border-color:${color}"><i class="${a.icon}" style="color:${color};margin-right:4px"></i>${a.label}</div>
+    </div>`;
+  });
+  headerHtml += '</div>';
+
+  const rowH = 42;
+  const totalH = steps.length * rowH + 40;
+
+  let msgsHtml = '<div class="seq-messages" style="position:relative;padding-left:24px">';
+  let svgLines = '';
+
+  // Lifelines
+  actors.forEach((a, i) => {
+    const x = i * colW + colW / 2;
+    const color = getActorColor(a);
+    svgLines += `<line x1="${x}" y1="0" x2="${x}" y2="${totalH}" stroke="${color}" stroke-width="1" stroke-dasharray="4,4" opacity="0.2"/>`;
+  });
+
+  // Messages
+  steps.forEach((step, si) => {
+    const fi = actorIdx[step.from] ?? 0;
+    const ti = actorIdx[step.to] ?? 0;
+    const isCurrent = si === currentStep;
+    const isFuture = si > currentStep;
+    const cls = isCurrent ? 'current' : (isFuture ? 'future' : '');
+    const typeStyle = TYPE_ARROW[step.type] || TYPE_ARROW.internal;
+
+    const x1 = fi * colW + colW / 2;
+    const x2 = ti * colW + colW / 2;
+    const y = si * rowH + 20;
+    const isSelf = step.from === step.to;
+
+    let dashAttr = typeStyle.dash ? `stroke-dasharray="${typeStyle.dash}"` : '';
+    const opacity = isFuture ? 0.15 : (isCurrent ? 1 : 0.6);
+    const sw = isCurrent ? typeStyle.width + 0.5 : typeStyle.width;
+
+    if (isSelf) {
+      const loopW = 30;
+      svgLines += `<path d="M ${x1} ${y} C ${x1 + loopW} ${y - 12}, ${x1 + loopW} ${y + 12}, ${x1} ${y}" fill="none" stroke="${typeStyle.color}" stroke-width="${sw}" ${dashAttr} opacity="${opacity}"/>`;
+    } else {
+      const mid = `arrow-${si}`;
+      svgLines += `<defs><marker id="${mid}" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,6 2.5,0 5" fill="${typeStyle.color}"/></marker></defs>`;
+      svgLines += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${typeStyle.color}" stroke-width="${sw}" ${dashAttr} marker-end="url(#${mid})" opacity="${opacity}"/>`;
+      if (isCurrent) {
+        const pathD = `M ${x1} ${y} L ${x2} ${y}`;
+        svgLines += `<circle r="3" fill="${typeStyle.color}"><animateMotion dur="1s" repeatCount="indefinite" path="${pathD}"/></circle>`;
+      }
+    }
+
+    // Label
+    const labelX = isSelf ? x1 + 35 : (x1 + x2) / 2;
+    const labelAnchor = isSelf ? 'start' : 'middle';
+    svgLines += `<text x="${labelX}" y="${y - 6}" text-anchor="${labelAnchor}" fill="${isCurrent ? 'var(--text)' : 'var(--text-muted)'}" font-size="${isCurrent ? 10.5 : 9.5}" font-weight="${isCurrent ? 600 : 400}" opacity="${opacity}">${step.n}. ${escapeHtml(truncate(step.action, 35))}</text>`;
+
+    if (step.topic && !isFuture) {
+      svgLines += `<text x="${labelX}" y="${y + 14}" text-anchor="${labelAnchor}" fill="${typeStyle.color}" font-size="8.5" opacity="${opacity * 0.7}">${step.topic.split('.').pop()}</text>`;
+    }
+  });
+
+  msgsHtml += '</div>';
+
+  mv.innerHTML = `<div class="seq-view">${headerHtml}
+    <div class="seq-lifeline-area" style="height:${totalH}px;position:relative;padding-left:24px">
+      <svg class="seq-arrow-svg" style="width:${actors.length * colW}px;height:${totalH}px">${svgLines}</svg>
+    </div>
+  </div>`;
+
+  // Scroll to current step
+  const seqView = mv.querySelector('.seq-view');
+  if (seqView) {
+    const targetY = currentStep * rowH;
+    seqView.scrollTop = Math.max(0, targetY - 120);
+  }
+}
+
+// ── Detail Panel ──
+function renderDetail() {
+  if (!currentScenario) return;
+  const dc = document.getElementById('detail-content');
+  const sc = currentScenario;
+  const step = sc.steps[currentStep];
+
+  let html = '';
+
+  // Scenario info
+  html += `<div class="section">
+    <h3>시나리오</h3>
+    <div class="step-title">${escapeHtml(sc.title)}</div>
+    <div class="scenario-desc">${escapeHtml(sc.description)}</div>`;
+  if (sc.ui?.tags) {
+    html += '<div class="tags">';
+    sc.ui.tags.forEach(t => html += `<span class="tag">${escapeHtml(t)}</span>`);
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // Current step info
+  if (step) {
+    const typeStyle = TYPE_ARROW[step.type] || TYPE_ARROW.internal;
+    const fromActor = actorMap[step.from];
+    const toActor = actorMap[step.to];
+    html += `<div class="section">
+      <h3>현재 스텝</h3>
+      <div class="step-title">${step.n}단계</div>
+      <span class="step-type type-${step.type}">${step.type}</span>
+      <div class="step-action">${escapeHtml(step.action)}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+        <span style="color:${fromActor ? getActorColor(fromActor) : 'inherit'}">${fromActor?.label || step.from}</span>
+        <i class="ti ti-arrow-right" style="margin:0 4px;font-size:10px"></i>
+        <span style="color:${toActor ? getActorColor(toActor) : 'inherit'}">${toActor?.label || step.to}</span>
+      </div>`;
+
+    if (step.topic) {
+      html += `<div style="font-size:11px;margin-bottom:8px"><i class="ti ti-broadcast" style="color:var(--purple);margin-right:4px"></i><span style="color:var(--purple)">${escapeHtml(step.topic)}</span></div>`;
+    }
+    if (step.duration) {
+      html += `<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px"><i class="ti ti-clock" style="margin-right:4px"></i>${formatDuration(step.duration)}</div>`;
+    }
+    html += '</div>';
+
+    // Payload
+    if (step.payload) {
+      html += `<div class="section"><h3>페이로드</h3><div class="payload-block">${escapeHtml(JSON.stringify(step.payload, null, 2))}</div></div>`;
+    }
+
+    // Annotations
+    if (step.annotations?.length) {
+      html += '<div class="section"><h3>주석</h3>';
+      step.annotations.forEach(a => html += `<div class="annotation">${escapeHtml(a)}</div>`);
+      html += '</div>';
+    }
+  }
+
+  // Branches
+  if (sc.branches) {
+    const relevantFailures = (sc.branches.failures || []).filter(b => !step || b.afterStep <= step.n);
+    const relevantAlts = (sc.branches.alternates || []).filter(b => !step || b.afterStep <= step.n);
+
+    if (relevantFailures.length || relevantAlts.length) {
+      html += '<div class="section branch-section"><h3>분기</h3>';
+      relevantFailures.forEach(b => {
+        const isSelected = selectedBranch === b.id;
+        html += `<button class="branch-item failure ${isSelected ? 'active' : ''}" onclick="toggleBranch('${b.id}')">
+          <div class="trigger"><i class="ti ti-alert-triangle" style="color:var(--red);font-size:12px;margin-right:4px"></i>${escapeHtml(b.trigger)}</div>
+          <div class="result">Step ${b.afterStep} 이후</div>
+        </button>`;
+        if (isSelected) {
+          html += `<div class="branch-detail">`;
+          if (b.result.status) html += `<div><span class="status-code">${b.result.status}</span> ${b.result.code || ''}</div>`;
+          if (b.result.message) html += `<div style="margin-top:4px">${escapeHtml(b.result.message)}</div>`;
+          if (b.recovery) html += `<div style="margin-top:4px;color:var(--green)"><i class="ti ti-refresh" style="margin-right:3px"></i>${escapeHtml(b.recovery)}</div>`;
+          html += '</div>';
+        }
+      });
+      relevantAlts.forEach(b => {
+        const isSelected = selectedBranch === b.id;
+        html += `<button class="branch-item alternate ${isSelected ? 'active' : ''}" onclick="toggleBranch('${b.id}')">
+          <div class="trigger"><i class="ti ti-switch-horizontal" style="color:var(--amber);font-size:12px;margin-right:4px"></i>${escapeHtml(b.trigger)}</div>
+          <div class="result">Step ${b.afterStep} 이후</div>
+        </button>`;
+        if (isSelected) {
+          html += `<div class="branch-detail">`;
+          if (b.result.status) html += `<div><span style="font-weight:700;color:var(--amber)">${b.result.status}</span> ${b.result.code || ''}</div>`;
+          if (b.result.message) html += `<div style="margin-top:4px">${escapeHtml(b.result.message)}</div>`;
+          html += '</div>';
+        }
+      });
+      html += '</div>';
+    }
+  }
+
+  dc.innerHTML = html;
+}
+
+function toggleBranch(id) {
+  selectedBranch = selectedBranch === id ? null : id;
+  renderDetail();
+}
+
+// ── Step Navigation ──
+function updateStepInfo() {
+  const info = document.getElementById('step-info');
+  if (!currentScenario) { info.textContent = '- / -'; return; }
+  info.textContent = `${currentStep + 1} / ${currentScenario.steps.length}`;
+}
+
+function nextStep() {
+  if (!currentScenario) return;
+  if (currentStep < currentScenario.steps.length - 1) {
+    currentStep++;
+    onStepChange();
+  } else if (isPlaying) {
+    stopPlay();
+  }
+}
+
+function prevStep() {
+  if (!currentScenario || currentStep <= 0) return;
+  currentStep--;
+  onStepChange();
+}
+
+function resetSteps() {
+  if (!currentScenario) return;
+  currentStep = 0;
+  stopPlay();
+  clearLog();
+  onStepChange();
+  logStep(0);
+}
+
+function onStepChange() {
+  renderView();
+  renderDetail();
+  updateStepInfo();
+  logStep(currentStep);
+}
+
+function togglePlay() {
+  if (isPlaying) stopPlay();
+  else startPlay();
+}
+
+function startPlay() {
+  if (!currentScenario) return;
+  isPlaying = true;
+  document.getElementById('btn-play').innerHTML = '<i class="ti ti-player-pause"></i>';
+  playInterval = setInterval(() => nextStep(), playSpeed);
+}
+
+function stopPlay() {
+  isPlaying = false;
+  document.getElementById('btn-play').innerHTML = '<i class="ti ti-player-play"></i>';
+  if (playInterval) { clearInterval(playInterval); playInterval = null; }
+}
+
+function setSpeed(ms) {
+  playSpeed = ms;
+  updateSpeedButtons();
+  if (isPlaying) { stopPlay(); startPlay(); }
+}
+
+function updateSpeedButtons() {
+  document.getElementById('speed-1x').classList.toggle('active', playSpeed === 2000);
+  document.getElementById('speed-2x').classList.toggle('active', playSpeed === 1000);
+  document.getElementById('speed-05x').classList.toggle('active', playSpeed === 4000);
+}
+
+// ── Log Panel ──
+function clearLog() {
+  document.getElementById('log-panel').innerHTML = '<div style="color:var(--text-dim);font-size:11px">[ Synapse Flow Simulator -- 로그 패널 ]</div>';
+}
+
+function logStep(idx) {
+  if (!currentScenario) return;
+  const step = currentScenario.steps[idx];
+  if (!step) return;
+  const lp = document.getElementById('log-panel');
+  const type = step.type;
+  let dir = 'evt';
+  let dirLabel = 'EVT';
+  if (type === 'http_request') { dir = 'req'; dirLabel = 'REQ'; }
+  else if (type === 'http_response') { dir = 'res'; dirLabel = 'RES'; }
+  else if (type === 'error') { dir = 'err'; dirLabel = 'ERR'; }
+  else if (type.startsWith('kafka')) { dir = 'evt'; dirLabel = type === 'kafka_publish' ? 'PUB' : 'SUB'; }
+
+  const time = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+  const topicStr = step.topic ? ` [${step.topic}]` : '';
+
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.style.animation = 'fadeInUp .2s ease';
+  entry.innerHTML = `<span class="log-n">#${String(step.n).padStart(2, '0')}</span><span class="log-time">${time}</span><span class="log-dir ${dir}">${dirLabel}</span><span class="log-action">${escapeHtml(step.from)} → ${escapeHtml(step.to)}: ${escapeHtml(step.action)}${topicStr}</span>`;
+  lp.appendChild(entry);
+  lp.scrollTop = lp.scrollHeight;
+}
+
+// ── Helpers ──
+function getScenarioActors() {
+  if (!currentScenario) return [];
+  // Use scenario's actor ID list, plus any extra actors referenced in steps
+  const ids = new Set(currentScenario.actors || []);
+  currentScenario.steps.forEach(s => { ids.add(s.from); ids.add(s.to); });
+  return Array.from(ids).map(id => actorMap[id]).filter(Boolean);
+}
+
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function truncate(s, n) {
+  if (!s || s.length <= n) return s;
+  return s.slice(0, n) + '...';
+}
+
+function formatDuration(ms) {
+  if (ms < 1000) return ms + 'ms';
+  if (ms < 60000) return (ms / 1000).toFixed(1) + 's';
+  return (ms / 60000).toFixed(1) + 'min';
+}
+
+function toggleSidebar(force) {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  const isOpen = force !== undefined ? force : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  ov.classList.toggle('open', isOpen);
+}
+
+// ── Keyboard ──
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  switch (e.key) {
+    case 'ArrowRight': e.preventDefault(); nextStep(); break;
+    case 'ArrowLeft': e.preventDefault(); prevStep(); break;
+    case ' ': e.preventDefault(); togglePlay(); break;
+    case 'Home': e.preventDefault(); resetSteps(); break;
+  }
+});
+
+// ── Resize ──
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (currentScenario) renderView(); }, 150);
+});
+
+// ── Boot ──
+init();
+</script>
+</body>
+</html>
