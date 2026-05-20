@@ -193,9 +193,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
       <button id="btn-next" onclick="nextStep()" title="다음 (→)" aria-label="다음 단계"><i class="ti ti-chevron-right"></i></button>
       <div class="sep" role="separator"></div>
       <button id="btn-play" onclick="togglePlay()" title="재생/정지 (Space)" aria-label="재생"><i class="ti ti-player-play"></i></button>
+      <button class="speed-btn" id="speed-025x" onclick="setSpeed(8000)">0.25x</button>
+      <button class="speed-btn" id="speed-05x" onclick="setSpeed(4000)">0.5x</button>
       <button class="speed-btn" id="speed-1x" onclick="setSpeed(2000)">1x</button>
       <button class="speed-btn" id="speed-2x" onclick="setSpeed(1000)">2x</button>
-      <button class="speed-btn" id="speed-05x" onclick="setSpeed(4000)">.5x</button>
       <div class="sep"></div>
       <button onclick="resetSteps()" title="처음으로" aria-label="처음으로"><i class="ti ti-player-skip-back"></i></button>
     </div>
@@ -699,9 +700,10 @@ function setSpeed(ms) {
 }
 
 function updateSpeedButtons() {
+  document.getElementById('speed-025x').classList.toggle('active', playSpeed === 8000);
+  document.getElementById('speed-05x').classList.toggle('active', playSpeed === 4000);
   document.getElementById('speed-1x').classList.toggle('active', playSpeed === 2000);
   document.getElementById('speed-2x').classList.toggle('active', playSpeed === 1000);
-  document.getElementById('speed-05x').classList.toggle('active', playSpeed === 4000);
 }
 
 // ── Log Panel ──
