@@ -243,23 +243,29 @@ let playSpeed = 2000;
 let currentView = 'arch';
 let selectedBranch = null;
 
-// ── Color Maps ──
-const COLOR_MAP = {blue:'#3b82f6',teal:'#14b8a6',coral:'#f97316',amber:'#f59e0b',pink:'#ec4899',purple:'#9333ea',red:'#ef4444',green:'#22c55e',gray:'#6b7280',cyan:'#06b6d4'};
-const KIND_COLORS = {client:'#4a9eff',edge:'#9333ea',datastore:'#3b82f6',broker:'#f59e0b',external:'#6b7280',ops:'#f59e0b',k8s:'#3b82f6'};
-const TYPE_ARROW = {
-  http_request:{color:'#3b82f6',dash:'',width:2},
-  http_response:{color:'#22c55e',dash:'8,4',width:2},
-  error:{color:'#ef4444',dash:'4,4',width:2},
-  kafka_publish:{color:'#9333ea',dash:'',width:3},
-  kafka_consume:{color:'#9333ea',dash:'',width:3},
-  db_query:{color:'#6b7280',dash:'',width:1.5},
-  internal:{color:'#484f58',dash:'4,4',width:1.5},
-  external_api:{color:'#f97316',dash:'',width:2},
-  cache_op:{color:'#ef4444',dash:'',width:2},
-  k8s_event:{color:'#06b6d4',dash:'',width:2},
-  git_op:{color:'#f97316',dash:'',width:2},
-  sync_op:{color:'#14b8a6',dash:'',width:2}
-};
+// ── Color Maps (read from CSS custom properties) ──
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+function initColors() {
+  const v = cssVar;
+  window.COLOR_MAP = {blue:v('--blue'),teal:v('--teal'),coral:v('--coral'),amber:v('--amber'),pink:v('--pink'),purple:v('--purple'),red:v('--red'),green:v('--green'),gray:v('--gray'),cyan:v('--cyan')};
+  window.KIND_COLORS = {client:'#4a9eff',edge:v('--purple'),datastore:v('--blue'),broker:v('--amber'),external:v('--gray'),ops:v('--amber'),k8s:v('--blue')};
+  window.TYPE_ARROW = {
+    http_request:{color:v('--blue'),dash:'',width:2},
+    http_response:{color:v('--green'),dash:'8,4',width:2},
+    error:{color:v('--red'),dash:'4,4',width:2},
+    kafka_publish:{color:v('--purple'),dash:'',width:3},
+    kafka_consume:{color:v('--purple'),dash:'',width:3},
+    db_query:{color:v('--gray'),dash:'',width:1.5},
+    internal:{color:v('--text-dim'),dash:'4,4',width:1.5},
+    external_api:{color:v('--coral'),dash:'',width:2},
+    cache_op:{color:v('--red'),dash:'',width:2},
+    k8s_event:{color:v('--cyan'),dash:'',width:2},
+    git_op:{color:v('--coral'),dash:'',width:2},
+    sync_op:{color:v('--teal'),dash:'',width:2}
+  };
+}
 
 function getActorColor(actor) {
   if (actor.kind === 'service') return COLOR_MAP[actor.color] || '#3b82f6';
@@ -786,6 +792,7 @@ window.addEventListener('resize', () => {
 });
 
 // ── Boot ──
+initColors();
 init();
 </script>
 </body>
