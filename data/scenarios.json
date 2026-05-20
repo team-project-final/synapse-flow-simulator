@@ -1,0 +1,768 @@
+{
+  "version": "1.0",
+  "generatedAt": "2026-05-20",
+
+  "categories": [
+    {
+      "id": "auth",
+      "label": "인증 및 보안",
+      "color": "blue",
+      "description": "JWT · OAuth2 · MFA · RBAC · IDOR",
+      "scenarioIds": ["auth-login-basic", "auth-oauth2", "auth-mfa-totp", "security-rbac-idor", "auth-jwt-refresh"]
+    },
+    {
+      "id": "flow",
+      "label": "AI 및 이벤트 흐름",
+      "color": "teal",
+      "description": "Kafka · CloudEvents · LLM · pgvector",
+      "scenarioIds": ["flow-note-to-card", "flow-semantic-search", "flow-llm-fallback", "flow-review-gamification", "flow-idempotency"]
+    },
+    {
+      "id": "failure",
+      "label": "장애 및 복구",
+      "color": "coral",
+      "description": "DLQ · Schema · CrashLoop · 분류",
+      "scenarioIds": ["failure-500-classified", "failure-crashloop", "failure-dlq", "failure-schema-broken"]
+    },
+    {
+      "id": "ops",
+      "label": "운영 및 GitOps",
+      "color": "amber",
+      "description": "ArgoCD · ESO · Tempo · Image Updater",
+      "scenarioIds": ["ops-argocd-sync", "ops-image-updater", "ops-eso-rotation", "ops-distributed-tracing"]
+    }
+  ],
+
+  "actors": [
+    { "id": "Browser",         "label": "웹 브라우저",          "kind": "client",    "color": "gray",   "icon": "ti-browser" },
+    { "id": "MobileApp",       "label": "모바일 앱 (Flutter)",  "kind": "client",    "color": "gray",   "icon": "ti-device-mobile" },
+    { "id": "Gateway",         "label": "API Gateway",          "kind": "edge",      "color": "purple", "icon": "ti-network", "description": "synapse-gateway (비공개 레포)" },
+
+    { "id": "Platform",        "label": "Platform Service",     "kind": "service",   "color": "blue",   "icon": "ti-server", "description": "auth/audit/billing/notification" },
+    { "id": "Knowledge",       "label": "Knowledge Service",    "kind": "service",   "color": "teal",   "icon": "ti-notes", "description": "note/graph/chunking" },
+    { "id": "Engagement",      "label": "Engagement Service",   "kind": "service",   "color": "pink",   "icon": "ti-trophy", "description": "community/gamification" },
+    { "id": "LearningCard",    "label": "Learning Card (Java)", "kind": "service",   "color": "coral",  "icon": "ti-cards", "description": "card/srs SM-2" },
+    { "id": "LearningAI",      "label": "Learning AI (Python)", "kind": "service",   "color": "amber",  "icon": "ti-sparkles", "description": "FastAPI + Claude/OpenAI" },
+
+    { "id": "PostgreSQL",      "label": "PostgreSQL (RDS)",     "kind": "datastore", "color": "blue",   "icon": "ti-database" },
+    { "id": "Redis",           "label": "Redis (ElastiCache)",  "kind": "datastore", "color": "red",    "icon": "ti-database" },
+    { "id": "pgvector",        "label": "pgvector + HNSW",      "kind": "datastore", "color": "purple", "icon": "ti-vector-bezier" },
+
+    { "id": "Kafka",           "label": "Kafka (MSK)",          "kind": "broker",    "color": "amber",  "icon": "ti-broadcast" },
+    { "id": "SchemaRegistry",  "label": "Schema Registry",      "kind": "broker",    "color": "amber",  "icon": "ti-file-check" },
+
+    { "id": "GoogleOAuth",     "label": "Google OAuth",         "kind": "external",  "color": "gray",   "icon": "ti-brand-google" },
+    { "id": "GitHubOAuth",     "label": "GitHub OAuth",         "kind": "external",  "color": "gray",   "icon": "ti-brand-github" },
+    { "id": "ClaudeAPI",       "label": "Claude API",           "kind": "external",  "color": "coral",  "icon": "ti-sparkles" },
+    { "id": "OpenAIAPI",       "label": "OpenAI API",           "kind": "external",  "color": "green",  "icon": "ti-circle" },
+    { "id": "Authenticator",   "label": "Authenticator App",    "kind": "external",  "color": "gray",   "icon": "ti-shield-lock" },
+
+    { "id": "ArgoCD",          "label": "ArgoCD",               "kind": "ops",       "color": "amber",  "icon": "ti-git-merge" },
+    { "id": "ImageUpdater",    "label": "Image Updater",        "kind": "ops",       "color": "amber",  "icon": "ti-refresh" },
+    { "id": "ESO",             "label": "External Secrets Op.", "kind": "ops",       "color": "amber",  "icon": "ti-lock" },
+    { "id": "Tempo",           "label": "Tempo (Tracing)",      "kind": "ops",       "color": "purple", "icon": "ti-timeline" },
+    { "id": "AWSSecretsManager","label": "AWS Secrets Manager", "kind": "external",  "color": "gray",   "icon": "ti-key" },
+    { "id": "ECR",             "label": "ECR Registry",         "kind": "external",  "color": "gray",   "icon": "ti-package" },
+    { "id": "Git",             "label": "GitHub (gitops repo)", "kind": "external",  "color": "gray",   "icon": "ti-brand-github" },
+    { "id": "GitHubActions",   "label": "GitHub Actions",       "kind": "external",  "color": "gray",   "icon": "ti-rocket" },
+
+    { "id": "Pod",             "label": "K8s Pod",              "kind": "k8s",       "color": "blue",   "icon": "ti-box" },
+    { "id": "Kubelet",         "label": "kubelet",              "kind": "k8s",       "color": "gray",   "icon": "ti-settings" },
+    { "id": "EKS",             "label": "EKS Cluster",          "kind": "k8s",       "color": "blue",   "icon": "ti-cloud" },
+
+    { "id": "User",            "label": "사용자",                "kind": "client",    "color": "gray",   "icon": "ti-user" },
+    { "id": "Developer",       "label": "개발자",                "kind": "client",    "color": "gray",   "icon": "ti-code" },
+    { "id": "Operator",        "label": "운영자",                "kind": "client",    "color": "gray",   "icon": "ti-user-cog" }
+  ],
+
+  "topics": [
+    {
+      "name": "platform.auth.user-registered-v1",
+      "domain": "platform", "event": "user-registered", "version": 1,
+      "schema": "platform/UserRegistered.avsc",
+      "compatibility": "BACKWARD",
+      "producers": ["Platform"],
+      "consumers": ["Platform", "Engagement"],
+      "description": "신규 사용자 가입 시 발행 (audit, notification, gamification fan-in)"
+    },
+    {
+      "name": "knowledge.note.note-created-v1",
+      "domain": "knowledge", "event": "note-created", "version": 1,
+      "schema": "knowledge/note-created-v1.avsc",
+      "compatibility": "BACKWARD_TRANSITIVE",
+      "producers": ["Knowledge"],
+      "consumers": ["Knowledge", "LearningAI", "Engagement"],
+      "description": "노트 생성 — chunking, AI 카드 생성, gamification 트리거"
+    },
+    {
+      "name": "knowledge.note.note-updated-v1",
+      "domain": "knowledge", "event": "note-updated", "version": 1,
+      "schema": "knowledge/NoteUpdated.avsc",
+      "compatibility": "BACKWARD_TRANSITIVE",
+      "producers": ["Knowledge"],
+      "consumers": ["Knowledge", "LearningAI"]
+    },
+    {
+      "name": "knowledge.chunking.chunk-ready-v1",
+      "domain": "knowledge", "event": "chunk-ready", "version": 1,
+      "schema": "(pending)",
+      "compatibility": "BACKWARD_TRANSITIVE",
+      "producers": ["Knowledge"],
+      "consumers": ["Knowledge"],
+      "description": "노트가 청크 분할 + 임베딩 완료"
+    },
+    {
+      "name": "learning.ai.cards-generated-v1",
+      "domain": "learning", "event": "cards-generated", "version": 1,
+      "schema": "learning/CardsGenerated.avsc",
+      "compatibility": "BACKWARD",
+      "producers": ["LearningAI"],
+      "consumers": ["Platform", "LearningCard"]
+    },
+    {
+      "name": "learning.card.review-completed-v1",
+      "domain": "learning", "event": "review-completed", "version": 1,
+      "schema": "learning/ReviewCompleted.avsc",
+      "compatibility": "BACKWARD",
+      "producers": ["LearningCard"],
+      "consumers": ["Engagement"]
+    },
+    {
+      "name": "engagement.community.comment-created-v1",
+      "domain": "engagement", "event": "comment-created", "version": 1,
+      "schema": "(pending)",
+      "compatibility": "BACKWARD",
+      "producers": ["Engagement"],
+      "consumers": ["Engagement"]
+    },
+    {
+      "name": "engagement.gamification.badge-earned-v1",
+      "domain": "engagement", "event": "badge-earned", "version": 1,
+      "schema": "(pending)",
+      "compatibility": "BACKWARD",
+      "producers": ["Engagement"],
+      "consumers": ["Platform"]
+    },
+    {
+      "name": "external.pg.payment-completed-v1",
+      "domain": "external", "event": "payment-completed", "version": 1,
+      "schema": "(external)",
+      "compatibility": "BACKWARD",
+      "producers": [],
+      "consumers": ["Platform"]
+    },
+    {
+      "name": "learning.card.review-completed-v1.dlq",
+      "domain": "learning", "event": "review-completed", "version": 1,
+      "schema": "(원본 + 에러 헤더)",
+      "compatibility": "BACKWARD",
+      "producers": ["LearningCard"],
+      "consumers": ["Operator"],
+      "description": "DLQ 패턴 — 모든 토픽에 {원본}.dlq 형식으로 자동 적용 (§8.7)"
+    }
+  ],
+
+  "scenarios": [
+    {
+      "id": "auth-login-basic",
+      "title": "로그인 (웹·모바일 통합)",
+      "category": "auth", "priority": "P0", "status": "implemented",
+      "description": "이메일+패스워드로 로그인 → JWT 발급. 모바일은 FCM 토큰 동시 등록.",
+      "actors": ["Browser", "MobileApp", "Gateway", "Platform", "PostgreSQL", "Redis"],
+      "ui": { "layout": "sequence", "tags": ["JWT", "RS256", "bcrypt", "FCM"], "estimatedDuration": 250 },
+      "rules": ["§6.1", "§6.4", "§11.1"],
+      "files": ["synapse-platform-svc/src/main/java/com/synapse/platform/auth/AuthController.java"],
+      "steps": [
+        { "n": 1, "from": "Browser", "to": "Gateway", "type": "http_request", "action": "POST /api/v1/auth/login",
+          "payload": { "email": "alice@synapse.io", "password": "***" }, "duration": 20, "highlight": true },
+        { "n": 2, "from": "Gateway", "to": "Platform", "type": "http_request", "action": "라우팅 (whitelist 경로)", "duration": 5 },
+        { "n": 3, "from": "Platform", "to": "PostgreSQL", "type": "db_query", "action": "SELECT FROM users WHERE email=?",
+          "duration": 15, "annotations": ["bcrypt 검증"] },
+        { "n": 4, "from": "Platform", "to": "Platform", "type": "internal", "action": "JWT 생성 (RS256, kid 포함)",
+          "duration": 8, "annotations": ["AT 15min · RT 7day"], "highlight": true },
+        { "n": 5, "from": "Platform", "to": "Redis", "type": "cache_op", "action": "SET refresh:{userId} TTL 7day", "duration": 3 },
+        { "n": 6, "from": "Platform", "to": "Gateway", "type": "http_response", "action": "200 OK + JWT",
+          "payload": { "success": true, "data": { "accessToken": "eyJ...", "refreshToken": "...", "expiresIn": 900 } }, "duration": 5 },
+        { "n": 7, "from": "Gateway", "to": "Browser", "type": "http_response", "action": "Set-Cookie HttpOnly (웹) / Body (모바일)", "duration": 5 }
+      ],
+      "branches": {
+        "failures": [
+          { "id": "wrong-password", "trigger": "비밀번호 불일치", "afterStep": 3,
+            "result": { "status": 401, "code": "P_A001", "message": "Invalid credentials" } },
+          { "id": "account-locked", "trigger": "5회 실패 → 계정 잠금", "afterStep": 3,
+            "result": { "status": 423, "code": "P_A005", "message": "Account locked (15min)" }, "recovery": "이메일로 잠금 해제 링크" },
+          { "id": "mfa-required", "trigger": "사용자가 MFA 활성화", "afterStep": 4,
+            "result": { "status": 200, "code": "P_A007", "message": "MFA required — 임시 토큰 발급 (5min)" },
+            "recovery": "시나리오 #3 (MFA) 분기" }
+        ],
+        "alternates": [
+          { "id": "mobile-fcm", "trigger": "모바일 로그인", "afterStep": 1,
+            "result": { "message": "fcmToken을 body에 동봉 → Platform이 notification.devices upsert" } }
+        ]
+      }
+    },
+
+    {
+      "id": "auth-oauth2",
+      "title": "OAuth2 로그인 (Google/GitHub)",
+      "category": "auth", "priority": "P0", "status": "implemented",
+      "description": "OAuth Provider 위임 로그인 + AES-256 토큰 암호화 + Cookie 기반 state.",
+      "actors": ["Browser", "Platform", "GoogleOAuth", "PostgreSQL"],
+      "ui": { "layout": "sequence", "tags": ["OAuth2", "AES-256", "HttpOnly Cookie", "CSRF"], "estimatedDuration": 4000 },
+      "rules": ["§6.2", "§11.1"],
+      "files": ["synapse-platform-svc/src/main/java/com/synapse/platform/auth/oauth/"],
+      "steps": [
+        { "n": 1, "from": "Browser", "to": "Platform", "type": "http_request", "action": "GET /oauth2/authorization/google", "duration": 20 },
+        { "n": 2, "from": "Platform", "to": "Browser", "type": "http_response", "action": "Set-Cookie state + redirect_uri (HttpOnly)",
+          "annotations": ["HttpCookieOAuth2AuthorizationRequestRepository — 세션 X"], "duration": 8, "highlight": true },
+        { "n": 3, "from": "Browser", "to": "GoogleOAuth", "type": "external_api", "action": "302 → Google 동의 화면", "duration": 2000 },
+        { "n": 4, "from": "GoogleOAuth", "to": "Platform", "type": "http_request", "action": "GET /login/oauth2/code/google?code=&state=", "duration": 50 },
+        { "n": 5, "from": "Platform", "to": "Platform", "type": "internal", "action": "state Cookie 검증 (CSRF 방어)", "duration": 3, "highlight": true },
+        { "n": 6, "from": "Platform", "to": "GoogleOAuth", "type": "external_api", "action": "code → access_token 교환", "duration": 500 },
+        { "n": 7, "from": "Platform", "to": "GoogleOAuth", "type": "external_api", "action": "프로필 조회 /userinfo", "duration": 300 },
+        { "n": 8, "from": "Platform", "to": "PostgreSQL", "type": "db_query", "action": "UPSERT oauth_identities",
+          "payload": { "provider": "google", "provider_user_id": "108234...", "access_token_enc": "AES-256-GCM(...)", "linked_user_id": "uuid-..." },
+          "annotations": ["AES-256-GCM 암호화 (V20 마이그레이션)"], "duration": 20, "highlight": true },
+        { "n": 9, "from": "Platform", "to": "Browser", "type": "http_response", "action": "302 successRedirectUri?userId={uuid}", "duration": 10 }
+      ],
+      "branches": {
+        "failures": [
+          { "id": "user-denied", "trigger": "사용자 동의 거부", "afterStep": 3,
+            "result": { "status": 302, "message": "failureRedirectUri?error=access_denied" } },
+          { "id": "state-mismatch", "trigger": "state Cookie 누락/불일치 (CSRF)", "afterStep": 5,
+            "result": { "status": 400, "code": "P_A010", "message": "OAuth state mismatch" } },
+          { "id": "already-linked", "trigger": "다른 계정에 이미 연동된 OAuth ID", "afterStep": 8,
+            "result": { "status": 409, "code": "P_A011", "message": "Already linked to another account" } }
+        ]
+      }
+    },
+
+    {
+      "id": "auth-mfa-totp",
+      "title": "MFA TOTP 2차 인증",
+      "category": "auth", "priority": "P0", "status": "implemented",
+      "description": "Authenticator App + 6자리 TOTP 검증. 시간 drift 처리 포함.",
+      "actors": ["Browser", "Platform", "PostgreSQL", "Authenticator"],
+      "ui": { "layout": "sequence", "tags": ["TOTP", "MFA", "QR", "30-second window"], "estimatedDuration": 30000 },
+      "rules": ["§6.5", "§11.1"],
+      "files": ["synapse-platform-svc/src/main/java/com/synapse/platform/auth/mfa/"],
+      "steps": [
+        { "n": 1, "from": "Browser", "to": "Platform", "type": "http_request", "action": "POST /api/v1/auth/mfa/setup",
+          "annotations": ["등록 단계 시작"], "duration": 20, "highlight": true },
+        { "n": 2, "from": "Platform", "to": "Platform", "type": "internal", "action": "32바이트 시크릿 생성 + Base32 인코딩", "duration": 5 },
+        { "n": 3, "from": "Platform", "to": "PostgreSQL", "type": "db_query", "action": "INSERT mfa_credentials (state=PENDING)", "duration": 10 },
+        { "n": 4, "from": "Platform", "to": "Browser", "type": "http_response", "action": "otpauth URI + QR URL",
+          "payload": { "qrUrl": "otpauth://totp/Synapse:alice?secret=BASE32&issuer=Synapse" }, "duration": 5 },
+        { "n": 5, "from": "Browser", "to": "Authenticator", "type": "external_api", "action": "QR 스캔 (사용자 액션)", "duration": 10000 },
+        { "n": 6, "from": "Browser", "to": "Platform", "type": "http_request", "action": "POST /api/v1/auth/mfa/verify",
+          "payload": { "code": "523891" }, "duration": 20 },
+        { "n": 7, "from": "Platform", "to": "Platform", "type": "internal", "action": "TotpService — 시각 ±30초 윈도우 검증",
+          "duration": 5, "highlight": true, "annotations": ["drift 90초 초과 시 거부"] },
+        { "n": 8, "from": "Platform", "to": "PostgreSQL", "type": "db_query", "action": "UPDATE state=ACTIVE, users.mfa_enabled=true", "duration": 10 },
+        { "n": 9, "from": "Platform", "to": "Browser", "type": "http_response", "action": "200 + 새 JWT (claims: mfa=true)", "duration": 5 }
+      ],
+      "branches": {
+        "failures": [
+          { "id": "wrong-code", "trigger": "잘못된 코드 (3회)", "afterStep": 7,
+            "result": { "status": 401, "code": "P_M002", "message": "Invalid code (10min 잠금)" } },
+          { "id": "clock-drift", "trigger": "시간 동기 오류 (90초+ drift)", "afterStep": 7,
+            "result": { "status": 400, "code": "P_M003", "message": "Clock drift detected" },
+            "recovery": "사용자 디바이스 시간 동기 안내" }
+        ]
+      }
+    },
+
+    {
+      "id": "security-rbac-idor",
+      "title": "어드민 RBAC + IDOR 차단",
+      "category": "auth", "priority": "P1", "status": "partial",
+      "description": "401 vs 403 구분 + 본인 자원 검증 (IDOR 방지).",
+      "actors": ["Browser", "Gateway", "Platform", "Knowledge"],
+      "ui": { "layout": "matrix", "tags": ["RBAC", "IDOR", "401", "403", "@PreAuthorize"], "estimatedDuration": 100 },
+      "rules": ["§1.2", "§2.3"],
+      "steps": [
+        { "n": 1, "from": "Browser", "to": "Gateway", "type": "http_request", "action": "GET /api/v1/admin/users (JWT: USER role)",
+          "annotations": ["일반 사용자가 어드민 API 시도"], "duration": 20, "highlight": true },
+        { "n": 2, "from": "Gateway", "to": "Platform", "type": "http_request", "action": "JWT 검증 OK → 라우팅", "duration": 5 },
+        { "n": 3, "from": "Platform", "to": "Platform", "type": "internal", "action": "@PreAuthorize(\"hasRole('ADMIN')\") 위반",
+          "duration": 3, "highlight": true },
+        { "n": 4, "from": "Platform", "to": "Browser", "type": "http_response", "action": "403 Forbidden",
+          "payload": { "code": "P_S003", "message": "Insufficient role" }, "duration": 5 }
+      ],
+      "branches": {
+        "alternates": [
+          { "id": "admin-success", "trigger": "ADMIN role JWT", "afterStep": 2,
+            "result": { "status": 200, "message": "전체 사용자 목록 반환" } },
+          { "id": "no-jwt", "trigger": "JWT 없음", "afterStep": 1,
+            "result": { "status": 401, "code": "P_A003", "message": "Authentication required (401, not 403)" } },
+          { "id": "idor-attempt", "trigger": "Alice가 Bob의 자원 시도 — GET /api/v1/users/B/notes", "afterStep": 2,
+            "result": { "status": 403, "code": "KN_S001", "message": "Resource owner mismatch (IDOR 방지)" } }
+        ]
+      }
+    },
+
+    {
+      "id": "auth-jwt-refresh",
+      "title": "JWT 만료 → 리프레시 + 토큰 회전",
+      "category": "auth", "priority": "P0", "status": "implemented",
+      "description": "AT 만료 시 RT로 재발급. RT는 매번 회전 + 도난 의심 시 전체 로그아웃.",
+      "actors": ["Browser", "Gateway", "Platform", "PostgreSQL", "Redis"],
+      "ui": { "layout": "sequence", "tags": ["JWT", "Refresh", "Token Rotation", "Blacklist"], "estimatedDuration": 200 },
+      "rules": ["§6.1", "§6.4"],
+      "files": ["synapse-platform-svc/src/main/java/com/synapse/platform/auth/jwt/RefreshTokenService.java"],
+      "steps": [
+        { "n": 1, "from": "Browser", "to": "Gateway", "type": "http_request", "action": "GET /api/v1/notes (만료된 AT)", "duration": 20 },
+        { "n": 2, "from": "Gateway", "to": "Browser", "type": "http_response", "action": "401 + WWW-Authenticate: Bearer error=token_expired",
+          "duration": 5, "highlight": true },
+        { "n": 3, "from": "Browser", "to": "Gateway", "type": "http_request", "action": "POST /api/v1/auth/refresh",
+          "payload": { "refreshToken": "eyJ..." }, "duration": 20 },
+        { "n": 4, "from": "Gateway", "to": "Platform", "type": "http_request", "action": "라우팅", "duration": 5 },
+        { "n": 5, "from": "Platform", "to": "Redis", "type": "cache_op", "action": "GET blacklist:{tokenId}",
+          "annotations": ["블랙리스트 확인"], "duration": 3 },
+        { "n": 6, "from": "Platform", "to": "PostgreSQL", "type": "db_query", "action": "SELECT refresh_tokens WHERE user_id=? (UNIQUE, V23)",
+          "duration": 15 },
+        { "n": 7, "from": "Platform", "to": "Platform", "type": "internal", "action": "RT 검증 + 도난 감지 (IP/UA 비교)", "duration": 5 },
+        { "n": 8, "from": "Platform", "to": "PostgreSQL", "type": "db_query", "action": "DELETE 기존 RT (즉시 revoke)", "duration": 10, "highlight": true },
+        { "n": 9, "from": "Platform", "to": "PostgreSQL", "type": "db_query", "action": "INSERT 새 RT (회전)", "duration": 10 },
+        { "n": 10, "from": "Platform", "to": "Browser", "type": "http_response", "action": "200 + 새 AT + 새 RT",
+          "payload": { "accessToken": "eyJ...new", "refreshToken": "eyJ...new_rt", "expiresIn": 900 }, "duration": 5 },
+        { "n": 11, "from": "Browser", "to": "Gateway", "type": "http_request", "action": "GET /api/v1/notes (재시도, 새 AT)", "duration": 20 }
+      ],
+      "branches": {
+        "failures": [
+          { "id": "rt-reuse", "trigger": "RT 도난 의심 (다른 IP에서 같은 RT)", "afterStep": 7,
+            "result": { "status": 401, "code": "P_A012", "message": "RT reuse detected — 모든 디바이스 로그아웃" },
+            "recovery": "사용자 알림 + 재로그인 강제" },
+          { "id": "rt-expired", "trigger": "RT 7일 만료", "afterStep": 6,
+            "result": { "status": 401, "code": "P_A002", "message": "Refresh expired" }, "recovery": "재로그인" },
+          { "id": "rt-blacklisted", "trigger": "블랙리스트 토큰", "afterStep": 5,
+            "result": { "status": 401, "code": "P_A013", "message": "Token blacklisted" } }
+        ]
+      }
+    },
+
+    {
+      "id": "flow-note-to-card",
+      "title": "노트 → AI 카드 → fan-in 알림",
+      "category": "flow", "priority": "P0", "status": "w3_pending",
+      "description": "메인 데모. 노트 1건이 chunking + AI 카드 생성 + gamification 점수까지 동시 트리거.",
+      "actors": ["Browser", "Knowledge", "Kafka", "LearningAI", "Engagement", "Platform", "pgvector", "ClaudeAPI"],
+      "ui": { "layout": "fan-out", "tags": ["Kafka", "CloudEvents", "fan-in", "AI", "chunking"], "estimatedDuration": 3500,
+              "highlights": ["Kafka", "ClaudeAPI"] },
+      "rules": ["§8.1", "§8.2", "§8.6"],
+      "steps": [
+        { "n": 1, "from": "Browser", "to": "Knowledge", "type": "http_request", "action": "POST /api/v1/notes",
+          "payload": { "title": "Kafka basics", "content": "Apache Kafka is..." }, "duration": 20 },
+        { "n": 2, "from": "Knowledge", "to": "PostgreSQL", "type": "db_query", "action": "INSERT notes", "duration": 15 },
+        { "n": 3, "from": "Knowledge", "to": "Kafka", "type": "kafka_publish", "action": "publish NoteCreated",
+          "topic": "knowledge.note.note-created-v1",
+          "payload": {
+            "specversion": "1.0", "id": "evt-uuid-...", "source": "/knowledge-svc/note",
+            "type": "com.synapse.event.knowledge.NoteCreated", "time": 1716192000000,
+            "tenantid": "tenant-001", "traceparent": "00-{trace-id}-{span-id}-01",
+            "data": { "noteId": "uuid-...", "tenantId": "tenant-001", "title": "Kafka basics", "content": "...", "createdAt": 1716192000000 }
+          },
+          "duration": 8, "highlight": true, "annotations": ["3개 Consumer에게 동시 fan-out"] },
+        { "n": 4, "from": "Kafka", "to": "Knowledge", "type": "kafka_consume", "action": "consume → chunking 파이프라인",
+          "topic": "knowledge.note.note-created-v1", "duration": 5 },
+        { "n": 5, "from": "Knowledge", "to": "Knowledge", "type": "internal", "action": "500자 청크로 분할", "duration": 30 },
+        { "n": 6, "from": "Knowledge", "to": "OpenAIAPI", "type": "external_api", "action": "text-embedding-3-small (1536d)", "duration": 200 },
+        { "n": 7, "from": "Knowledge", "to": "pgvector", "type": "db_query", "action": "INSERT note_chunks (embedding + HNSW)", "duration": 25 },
+        { "n": 8, "from": "Knowledge", "to": "Kafka", "type": "kafka_publish", "action": "publish ChunkReady",
+          "topic": "knowledge.chunking.chunk-ready-v1", "duration": 5 },
+        { "n": 9, "from": "Kafka", "to": "LearningAI", "type": "kafka_consume", "action": "consume → AI 카드 생성",
+          "topic": "knowledge.note.note-created-v1", "duration": 5, "highlight": true },
+        { "n": 10, "from": "LearningAI", "to": "ClaudeAPI", "type": "external_api", "action": "card generation 프롬프트", "duration": 2500 },
+        { "n": 11, "from": "LearningAI", "to": "PostgreSQL", "type": "db_query", "action": "INSERT cards", "duration": 20 },
+        { "n": 12, "from": "LearningAI", "to": "Kafka", "type": "kafka_publish", "action": "publish CardsGenerated",
+          "topic": "learning.ai.cards-generated-v1",
+          "payload": { "noteId": "uuid-...", "userId": "uuid-...", "tenantId": "tenant-001", "cardCount": 5, "generatedAt": "..." },
+          "duration": 8 },
+        { "n": 13, "from": "Kafka", "to": "Engagement", "type": "kafka_consume", "action": "consume → +5점 (작성 포인트)",
+          "topic": "knowledge.note.note-created-v1", "duration": 5 },
+        { "n": 14, "from": "Engagement", "to": "PostgreSQL", "type": "db_query", "action": "UPDATE user_points", "duration": 10 },
+        { "n": 15, "from": "Kafka", "to": "Platform", "type": "kafka_consume", "action": "consume CardsGenerated → 푸시 알림",
+          "topic": "learning.ai.cards-generated-v1", "duration": 5, "highlight": true },
+        { "n": 16, "from": "Platform", "to": "Browser", "type": "http_response", "action": "FCM 푸시 알림 \"새 카드 5개 생성!\"", "duration": 100 }
+      ],
+      "branches": {
+        "failures": [
+          { "id": "llm-failure", "trigger": "Claude API 실패", "afterStep": 10,
+            "result": { "message": "시나리오 #8 (LLM Fallback)으로 분기" } },
+          { "id": "duplicate-event", "trigger": "Kafka 리밸런싱으로 중복 메시지", "afterStep": 9,
+            "result": { "message": "시나리오 #10 (멱등성)으로 분기" } }
+        ]
+      }
+    },
+
+    {
+      "id": "flow-semantic-search",
+      "title": "시맨틱 검색 (pgvector 코사인)",
+      "category": "flow", "priority": "P1", "status": "implemented",
+      "description": "쿼리 → OpenAI 임베딩 → HNSW 인덱스 → 유사 청크 반환.",
+      "actors": ["Browser", "LearningAI", "OpenAIAPI", "pgvector"],
+      "ui": { "layout": "sequence", "tags": ["pgvector", "HNSW", "cosine", "embedding", "tenant-isolation"], "estimatedDuration": 300 },
+      "rules": ["§11", "§9.1"],
+      "files": ["synapse-learning-svc/learning-ai/app/services/ai_service.py"],
+      "steps": [
+        { "n": 1, "from": "Browser", "to": "LearningAI", "type": "http_request", "action": "POST /api/v1/ai/search/semantic",
+          "payload": { "query": "Kafka 멱등성이 뭐야", "topK": 5, "threshold": 0.7 }, "duration": 20 },
+        { "n": 2, "from": "LearningAI", "to": "LearningAI", "type": "internal", "action": "JWT에서 tenantId 추출",
+          "duration": 2, "annotations": ["§11 데이터 주권 — 강제"] },
+        { "n": 3, "from": "LearningAI", "to": "OpenAIAPI", "type": "external_api", "action": "get_embedding(query) → 1536d", "duration": 200, "highlight": true },
+        { "n": 4, "from": "LearningAI", "to": "pgvector", "type": "db_query", "action": "SELECT ... ORDER BY embedding <=> $vec LIMIT 5 WHERE tenant_id=?",
+          "annotations": ["HNSW 인덱스 사용", "<=> 는 코사인 거리 연산자", "score = 1 - distance"],
+          "duration": 30, "highlight": true },
+        { "n": 5, "from": "LearningAI", "to": "LearningAI", "type": "internal", "action": "threshold 0.7 미만 필터링", "duration": 2 },
+        { "n": 6, "from": "LearningAI", "to": "Browser", "type": "http_response", "action": "200 + results",
+          "payload": { "results": [{ "chunk_id": "uuid", "note_id": "uuid", "content": "...", "score": 0.87 }] }, "duration": 5 }
+      ],
+      "branches": {
+        "failures": [
+          { "id": "openai-down", "trigger": "OpenAI 임베딩 실패", "afterStep": 3,
+            "result": { "status": 503, "code": "LRNG_AI003", "message": "Embedding service unavailable" },
+            "recovery": "tenacity 3회 재시도 후 503" },
+          { "id": "tenant-missing", "trigger": "tenant_id WHERE 누락", "afterStep": 4,
+            "result": { "status": 500, "message": "Tenant 격리 위반 — 시스템 거부 (§11)" } }
+        ]
+      }
+    },
+
+    {
+      "id": "flow-llm-fallback",
+      "title": "LLM Fallback (Claude → OpenAI)",
+      "category": "flow", "priority": "P0", "status": "implemented",
+      "description": "Synapse 시그니처. Claude 실패 시 OpenAI 자동 전환 + 일일 토큰 한도 차단.",
+      "actors": ["LearningAI", "ClaudeAPI", "OpenAIAPI", "Redis"],
+      "ui": { "layout": "sequence", "tags": ["Fallback", "Multi-LLM", "tenacity", "Cost Control"], "estimatedDuration": 8000,
+              "highlights": ["ClaudeAPI", "OpenAIAPI"] },
+      "rules": ["§13 (가칭)"],
+      "files": ["synapse-learning-svc/learning-ai/app/services/ai_service.py"],
+      "steps": [
+        { "n": 1, "from": "LearningAI", "to": "Redis", "type": "cache_op", "action": "GET daily_tokens:{date}",
+          "annotations": ["일일 한도 체크"], "duration": 3 },
+        { "n": 2, "from": "LearningAI", "to": "ClaudeAPI", "type": "external_api", "action": "1차 시도 (Claude 3.5)",
+          "duration": 1000, "highlight": true },
+        { "n": 3, "from": "LearningAI", "to": "LearningAI", "type": "internal", "action": "tenacity 백오프 1s",
+          "annotations": ["RateLimitError/APIConnectionError/InternalServerError"], "duration": 1000 },
+        { "n": 4, "from": "LearningAI", "to": "ClaudeAPI", "type": "external_api", "action": "2차 시도", "duration": 2000 },
+        { "n": 5, "from": "LearningAI", "to": "LearningAI", "type": "internal", "action": "tenacity 백오프 2s", "duration": 2000 },
+        { "n": 6, "from": "LearningAI", "to": "ClaudeAPI", "type": "external_api", "action": "3차 시도 (마지막)", "duration": 1500 },
+        { "n": 7, "from": "LearningAI", "to": "LearningAI", "type": "internal", "action": "logger.warning(\"Claude failed, falling back to OpenAI\")",
+          "duration": 2, "highlight": true },
+        { "n": 8, "from": "LearningAI", "to": "OpenAIAPI", "type": "external_api", "action": "OpenAI gpt-4o-mini 호출", "duration": 800, "highlight": true },
+        { "n": 9, "from": "LearningAI", "to": "Redis", "type": "cache_op", "action": "INCR daily_tokens:{date} +1500", "duration": 3 },
+        { "n": 10, "from": "LearningAI", "to": "LearningAI", "type": "internal", "action": "응답 메타에 model=\"gpt-4o-mini\" 표시", "duration": 1 }
+      ],
+      "branches": {
+        "failures": [
+          { "id": "token-limit", "trigger": "일일 500K 토큰 초과", "afterStep": 1,
+            "result": { "status": 429, "code": "LRNG_AI002", "message": "Daily token limit" },
+            "recovery": "자정 자동 리셋" },
+          { "id": "both-fail", "trigger": "Claude + OpenAI 모두 실패", "afterStep": 8,
+            "result": { "status": 503, "message": "전체 LLM 실패 — DLQ로 요청 보관" } },
+          { "id": "json-parse", "trigger": "응답 JSON 파싱 실패", "afterStep": 8,
+            "result": { "code": "LRNG_AI004", "message": "Card parsing failed (1회 재시도 후 실패)" } }
+        ]
+      }
+    },
+
+    {
+      "id": "flow-review-gamification",
+      "title": "복습 완료 → 점수 → 뱃지",
+      "category": "flow", "priority": "P1", "status": "partial",
+      "description": "SM-2 알고리즘 + Kafka 이벤트 + gamification policy + 뱃지 알림.",
+      "actors": ["Browser", "LearningCard", "PostgreSQL", "Kafka", "Engagement", "Platform"],
+      "ui": { "layout": "sequence", "tags": ["SM-2", "Kafka", "Gamification", "Badge"], "estimatedDuration": 500 },
+      "rules": ["§8.1", "§8.6"],
+      "steps": [
+        { "n": 1, "from": "Browser", "to": "LearningCard", "type": "http_request", "action": "POST /api/v1/cards/{id}/review",
+          "payload": { "rating": "GOOD" }, "duration": 20 },
+        { "n": 2, "from": "LearningCard", "to": "PostgreSQL", "type": "db_query", "action": "SELECT card + srs_state JSONB", "duration": 15 },
+        { "n": 3, "from": "LearningCard", "to": "LearningCard", "type": "internal", "action": "SM-2 알고리즘 — easeFactor·intervalDays 재계산",
+          "payload": {
+            "before": { "easeFactor": 2.5, "intervalDays": 1, "repetitions": 1, "lapses": 0 },
+            "after": { "easeFactor": 2.5, "intervalDays": 6, "repetitions": 2, "lapses": 0 }
+          },
+          "duration": 5, "highlight": true },
+        { "n": 4, "from": "LearningCard", "to": "PostgreSQL", "type": "db_query", "action": "UPDATE cards (srs_state, next_review_at)", "duration": 15 },
+        { "n": 5, "from": "LearningCard", "to": "Kafka", "type": "kafka_publish", "action": "publish ReviewCompleted",
+          "topic": "learning.card.review-completed-v1",
+          "payload": { "cardId": "...", "userId": "...", "tenantId": "...", "rating": "GOOD", "nextReviewAt": "...", "reviewedAt": "..." },
+          "duration": 8 },
+        { "n": 6, "from": "Kafka", "to": "Engagement", "type": "kafka_consume", "action": "consume → policy 적용",
+          "topic": "learning.card.review-completed-v1",
+          "annotations": ["GOOD=+10, EASY=+15, HARD=+5, AGAIN=0"], "duration": 5 },
+        { "n": 7, "from": "Engagement", "to": "PostgreSQL", "type": "db_query", "action": "UPDATE user_points SET total += 10", "duration": 10 },
+        { "n": 8, "from": "Engagement", "to": "Engagement", "type": "internal", "action": "임계치 체크 (100점=STUDIOUS, 1000점=MASTER)",
+          "duration": 3, "highlight": true },
+        { "n": 9, "from": "Engagement", "to": "Kafka", "type": "kafka_publish", "action": "publish BadgeEarned",
+          "topic": "engagement.gamification.badge-earned-v1", "duration": 8 },
+        { "n": 10, "from": "Kafka", "to": "Platform", "type": "kafka_consume", "action": "consume → 푸시 알림 \"🎉 STUDIOUS 획득!\"",
+          "topic": "engagement.gamification.badge-earned-v1", "duration": 5 }
+      ]
+    },
+
+    {
+      "id": "flow-idempotency",
+      "title": "CloudEvents 멱등성 (중복 메시지)",
+      "category": "flow", "priority": "P0", "status": "w3_pending",
+      "description": "at-least-once 현실. Pod 재기동으로 같은 eventId 두 번 → 두 번째는 skip.",
+      "actors": ["Kafka", "Engagement", "Redis"],
+      "ui": { "layout": "cycle", "tags": ["At-least-once", "Idempotency", "SETNX", "eventId"], "estimatedDuration": 100 },
+      "rules": ["§8.6"],
+      "steps": [
+        { "n": 1, "from": "Kafka", "to": "Engagement", "type": "kafka_consume", "action": "수신 (1차) eventId=evt-abc-123",
+          "topic": "knowledge.note.note-created-v1", "duration": 5 },
+        { "n": 2, "from": "Engagement", "to": "Redis", "type": "cache_op", "action": "SETNX processed:evt-abc-123 (TTL 7day)",
+          "annotations": ["§8.6 TTL 7일 — 메시지 보관 기간보다 길게"], "duration": 3, "highlight": true },
+        { "n": 3, "from": "Engagement", "to": "Redis", "type": "cache_op", "action": "→ true (첫 처리)", "duration": 1 },
+        { "n": 4, "from": "Engagement", "to": "PostgreSQL", "type": "db_query", "action": "비즈니스 로직 실행 (점수 적립)", "duration": 15 },
+        { "n": 5, "from": "Kubelet", "to": "Pod", "type": "k8s_event", "action": "SIGTERM (Pod 재기동)",
+          "annotations": ["offset commit 못 함"], "duration": 100, "highlight": true },
+        { "n": 6, "from": "Kafka", "to": "Engagement", "type": "kafka_consume", "action": "수신 (2차) 같은 eventId=evt-abc-123",
+          "topic": "knowledge.note.note-created-v1",
+          "annotations": ["리밸런싱으로 다른 Pod이 같은 메시지 수신"], "duration": 5, "highlight": true },
+        { "n": 7, "from": "Engagement", "to": "Redis", "type": "cache_op", "action": "SETNX processed:evt-abc-123",
+          "annotations": ["이미 존재 — false 반환"], "duration": 3 },
+        { "n": 8, "from": "Engagement", "to": "Engagement", "type": "internal", "action": "log.info(\"Duplicate event skipped\") + return",
+          "duration": 1, "highlight": true }
+      ],
+      "branches": {
+        "failures": [
+          { "id": "redis-down", "trigger": "Redis 다운", "afterStep": 2,
+            "result": { "message": "fail open (중복 위험) 또는 fail closed (메시지 보류) — 정책 결정 필요" } }
+        ]
+      }
+    },
+
+    {
+      "id": "failure-500-classified",
+      "title": "서비스 장애 분류 (500)",
+      "category": "failure", "priority": "P1", "status": "partial",
+      "description": "한 500도 여러 원인. DB 타임아웃 / OOM / 설정 누락 세 가지 별도 처리.",
+      "actors": ["Browser", "Platform", "PostgreSQL", "Pod"],
+      "ui": { "layout": "matrix", "tags": ["RFC 7807", "Timeout", "OOM", "Config"], "estimatedDuration": 30000 },
+      "rules": ["§2.3"],
+      "steps": [
+        { "n": 1, "from": "Browser", "to": "Platform", "type": "http_request", "action": "GET /api/v1/notes (N+1 쿼리 발생)", "duration": 20 },
+        { "n": 2, "from": "Platform", "to": "PostgreSQL", "type": "db_query", "action": "복잡한 JOIN + N+1 lazy load", "duration": 30000, "highlight": true },
+        { "n": 3, "from": "PostgreSQL", "to": "Platform", "type": "db_query", "action": "statement_timeout=30s 초과 → 거부", "duration": 5 },
+        { "n": 4, "from": "Platform", "to": "Platform", "type": "internal", "action": "GlobalExceptionHandler → RFC 7807", "duration": 3 },
+        { "n": 5, "from": "Platform", "to": "Browser", "type": "http_response", "action": "500 + Problem Detail",
+          "payload": {
+            "type": "https://synapse.io/errors/db-timeout",
+            "title": "Database query timeout", "status": 500, "code": "P_DB002", "traceId": "..."
+          }, "duration": 5 }
+      ],
+      "branches": {
+        "alternates": [
+          { "id": "oom", "trigger": "메모리 누수 (큰 결과셋 로드)", "afterStep": 1,
+            "result": { "message": "JVM heap 도달 → OOMKilled → Pod 재시작 → readiness 잠시 실패" } },
+          { "id": "config-missing", "trigger": "application.yml 환경변수 누락", "afterStep": 0,
+            "result": { "message": "Spring 부팅 실패 → 시나리오 #12 CrashLoopBackOff" } }
+        ]
+      }
+    },
+
+    {
+      "id": "failure-crashloop",
+      "title": "DB 연결 실패 → CrashLoopBackOff",
+      "category": "failure", "priority": "P1", "status": "implemented",
+      "description": "Pod 라이프사이클: PostgreSQL 거부 → 재시작 5회 → CrashLoopBackOff.",
+      "actors": ["Pod", "PostgreSQL", "Kubelet", "EKS"],
+      "ui": { "layout": "sequence", "tags": ["CrashLoopBackOff", "readinessProbe", "livenessProbe", "Flyway"], "estimatedDuration": 130000 },
+      "rules": ["§5.3"],
+      "steps": [
+        { "n": 1, "from": "EKS", "to": "Pod", "type": "k8s_event", "action": "Pod 시작 → Spring 부팅", "duration": 5000 },
+        { "n": 2, "from": "Pod", "to": "PostgreSQL", "type": "db_query", "action": "Flyway 연결 시도",
+          "duration": 2000, "highlight": true },
+        { "n": 3, "from": "PostgreSQL", "to": "Pod", "type": "db_query", "action": "connection refused (RDS 다운/SG 차단)", "duration": 100 },
+        { "n": 4, "from": "Pod", "to": "Pod", "type": "internal", "action": "Spring 부팅 실패 → JVM exit 1", "duration": 100 },
+        { "n": 5, "from": "Kubelet", "to": "Pod", "type": "k8s_event", "action": "재시작 (10초 후) — 재시작 정책 Always",
+          "duration": 10000, "highlight": true },
+        { "n": 6, "from": "Kubelet", "to": "Pod", "type": "k8s_event", "action": "재시작 (20초 후) — 지수 백오프", "duration": 20000 },
+        { "n": 7, "from": "Kubelet", "to": "Pod", "type": "k8s_event", "action": "재시작 (40초 후)", "duration": 40000 },
+        { "n": 8, "from": "Kubelet", "to": "Pod", "type": "k8s_event", "action": "STATUS=CrashLoopBackOff (5회 실패)",
+          "annotations": ["readinessProbe 영원히 실패 → Service endpoint 제외"], "duration": 1, "highlight": true }
+      ],
+      "branches": {
+        "alternates": [
+          { "id": "recovery", "trigger": "DB 회복 후 자동 복구", "afterStep": 8,
+            "result": { "message": "다음 재시작 시 정상 → readiness 통과 → 트래픽 수신 (수동 개입 불필요)" } }
+        ]
+      }
+    },
+
+    {
+      "id": "failure-dlq",
+      "title": "Kafka 실패 → DLQ → 수동 재처리",
+      "category": "failure", "priority": "P1", "status": "w3_pending",
+      "description": "3회 백오프 재시도 → DLQ 토픽 → 운영자 알림 → 수동 재발행.",
+      "actors": ["Kafka", "Engagement", "PostgreSQL", "Operator"],
+      "ui": { "layout": "sequence", "tags": ["DLQ", "Exponential Backoff", "Spring Kafka"], "estimatedDuration": 15000 },
+      "rules": ["§8.7"],
+      "steps": [
+        { "n": 1, "from": "Kafka", "to": "Engagement", "type": "kafka_consume", "action": "consume ReviewCompleted",
+          "topic": "learning.card.review-completed-v1", "duration": 5 },
+        { "n": 2, "from": "Engagement", "to": "PostgreSQL", "type": "db_query", "action": "UPDATE user_points (1차 시도)", "duration": 50 },
+        { "n": 3, "from": "PostgreSQL", "to": "Engagement", "type": "db_query", "action": "deadlock_detected (40P01)", "duration": 5, "highlight": true },
+        { "n": 4, "from": "Engagement", "to": "Engagement", "type": "internal", "action": "DefaultErrorHandler — 1초 대기", "duration": 1000 },
+        { "n": 5, "from": "Engagement", "to": "PostgreSQL", "type": "db_query", "action": "재시도 1 → 또 실패", "duration": 50 },
+        { "n": 6, "from": "Engagement", "to": "Engagement", "type": "internal", "action": "2초 대기", "duration": 2000 },
+        { "n": 7, "from": "Engagement", "to": "PostgreSQL", "type": "db_query", "action": "재시도 2 → 또 실패", "duration": 50 },
+        { "n": 8, "from": "Engagement", "to": "Engagement", "type": "internal", "action": "4초 대기", "duration": 4000 },
+        { "n": 9, "from": "Engagement", "to": "PostgreSQL", "type": "db_query", "action": "재시도 3 → 최종 실패", "duration": 50 },
+        { "n": 10, "from": "Engagement", "to": "Kafka", "type": "kafka_publish", "action": "DeadLetterPublishingRecoverer → DLQ 발행",
+          "topic": "learning.card.review-completed-v1.dlq",
+          "annotations": ["원본 메시지 + 헤더 + 에러 정보"], "duration": 8, "highlight": true },
+        { "n": 11, "from": "Engagement", "to": "Kafka", "type": "internal", "action": "원본 토픽 offset commit (skip)", "duration": 3 },
+        { "n": 12, "from": "Kafka", "to": "Operator", "type": "external_api", "action": "Slack/PagerDuty 알림 \"DLQ count > 0 for 5min\"",
+          "duration": 1000, "highlight": true },
+        { "n": 13, "from": "Operator", "to": "Kafka", "type": "external_api", "action": "DLQ → 원본 토픽 수동 재발행 (스크립트)", "duration": 100 }
+      ]
+    },
+
+    {
+      "id": "failure-schema-broken",
+      "title": "Schema 호환성 깨짐 → CI 차단",
+      "category": "failure", "priority": "P1", "status": "implemented",
+      "description": "BACKWARD 위반 PR. CI가 자동으로 머지 차단.",
+      "actors": ["Developer", "Git", "GitHubActions", "SchemaRegistry"],
+      "ui": { "layout": "sequence", "tags": ["Avro", "BACKWARD", "Schema Registry", "CI"], "estimatedDuration": 60000 },
+      "rules": ["§8.4", "§8.5"],
+      "files": ["synapse-shared/build.gradle.kts:testSchemasTask"],
+      "steps": [
+        { "n": 1, "from": "Developer", "to": "Git", "type": "git_op", "action": "PR: NoteCreated.avsc에 새 필드 (default 누락)",
+          "payload": { "field": { "name": "summary", "type": "string" } },
+          "annotations": ["default 값 없음"], "duration": 30000, "highlight": true },
+        { "n": 2, "from": "Git", "to": "GitHubActions", "type": "git_op", "action": "schema-check.yml 트리거", "duration": 5000 },
+        { "n": 3, "from": "GitHubActions", "to": "GitHubActions", "type": "internal", "action": "./gradlew testSchemasTask 실행", "duration": 15000 },
+        { "n": 4, "from": "GitHubActions", "to": "SchemaRegistry", "type": "external_api",
+          "action": "POST /compatibility/subjects/knowledge.note.note-created-v1-value/versions/latest",
+          "duration": 200, "highlight": true },
+        { "n": 5, "from": "SchemaRegistry", "to": "GitHubActions", "type": "external_api", "action": "{\"is_compatible\": false}", "duration": 5 },
+        { "n": 6, "from": "GitHubActions", "to": "Git", "type": "git_op", "action": "CI Status = FAILED + PR 차단",
+          "annotations": ["branch protection이 머지 금지"], "duration": 2, "highlight": true },
+        { "n": 7, "from": "Git", "to": "Developer", "type": "external_api", "action": "PR 코멘트 + GitHub 알림", "duration": 5000 }
+      ],
+      "branches": {
+        "alternates": [
+          { "id": "fixed", "trigger": "default 추가하여 재푸시", "afterStep": 7,
+            "result": { "message": "재실행 → 통과 → 머지 가능", "code": "Avro field: { name, type, default: '' }" } }
+        ]
+      }
+    },
+
+    {
+      "id": "ops-argocd-sync",
+      "title": "ArgoCD 자동 동기화",
+      "category": "ops", "priority": "P1", "status": "implemented",
+      "description": "git push → ApplicationSet → EKS Pod 업데이트 (3분 polling).",
+      "actors": ["Developer", "Git", "ArgoCD", "EKS"],
+      "ui": { "layout": "sequence", "tags": ["GitOps", "ApplicationSet", "Kustomize", "selfHeal"], "estimatedDuration": 180000 },
+      "rules": ["§5.1"],
+      "files": ["synapse-gitops/argocd/applicationset.yaml"],
+      "steps": [
+        { "n": 1, "from": "Developer", "to": "Git", "type": "git_op", "action": "kustomization.yaml 수정 (replica 1→3)", "duration": 30000 },
+        { "n": 2, "from": "Git", "to": "Git", "type": "internal", "action": "PR 머지 → main 업데이트", "duration": 5000 },
+        { "n": 3, "from": "ArgoCD", "to": "Git", "type": "git_op", "action": "3분 주기 polling (또는 webhook)",
+          "duration": 180000, "highlight": true },
+        { "n": 4, "from": "ArgoCD", "to": "ArgoCD", "type": "internal", "action": "ApplicationSet Matrix → 5 Application 자동 관리",
+          "duration": 3 },
+        { "n": 5, "from": "ArgoCD", "to": "ArgoCD", "type": "internal", "action": "Application 변경 감지 → OutOfSync 상태",
+          "duration": 5, "highlight": true },
+        { "n": 6, "from": "ArgoCD", "to": "EKS", "type": "sync_op", "action": "kubectl apply (syncPolicy.automated)",
+          "annotations": ["prune: true · selfHeal: true"], "duration": 2000 },
+        { "n": 7, "from": "EKS", "to": "EKS", "type": "k8s_event", "action": "Deployment replica 1 → 3 확장", "duration": 30000 },
+        { "n": 8, "from": "ArgoCD", "to": "ArgoCD", "type": "internal", "action": "Synced Healthy", "duration": 5 }
+      ]
+    },
+
+    {
+      "id": "ops-image-updater",
+      "title": "Image Updater (semver write-back)",
+      "category": "ops", "priority": "P2", "status": "implemented",
+      "description": "ECR 새 태그 → kustomization git auto-PR → ArgoCD sync.",
+      "actors": ["GitHubActions", "ECR", "ImageUpdater", "Git", "ArgoCD"],
+      "ui": { "layout": "sequence", "tags": ["Image Updater", "semver", "Auto-PR", "GitOps"], "estimatedDuration": 600000 },
+      "rules": ["§5.2"],
+      "steps": [
+        { "n": 1, "from": "GitHubActions", "to": "ECR", "type": "external_api", "action": "Docker build + push 태그 0.2.0", "duration": 120000 },
+        { "n": 2, "from": "ImageUpdater", "to": "ECR", "type": "external_api", "action": "5분 주기 스캔",
+          "duration": 300000, "highlight": true },
+        { "n": 3, "from": "ImageUpdater", "to": "ImageUpdater", "type": "internal", "action": "annotations 확인 (image-list, update-strategy=semver)",
+          "duration": 5 },
+        { "n": 4, "from": "ImageUpdater", "to": "ImageUpdater", "type": "internal", "action": "0.2.0 > 0.1.5 (현재) 비교",
+          "duration": 5, "highlight": true },
+        { "n": 5, "from": "ImageUpdater", "to": "Git", "type": "git_op", "action": "auto-PR: kustomization.yaml newTag: 0.2.0",
+          "payload": {
+            "file": "apps/platform-svc/overlays/dev/kustomization.yaml",
+            "change": "images[0].newTag: 0.1.5 → 0.2.0"
+          },
+          "duration": 3000, "highlight": true },
+        { "n": 6, "from": "Git", "to": "ArgoCD", "type": "git_op", "action": "merge 후 ArgoCD가 감지", "duration": 180000 },
+        { "n": 7, "from": "ArgoCD", "to": "EKS", "type": "sync_op", "action": "→ 시나리오 #15 (ArgoCD Sync)으로 분기", "duration": 30000 }
+      ]
+    },
+
+    {
+      "id": "ops-eso-rotation",
+      "title": "External Secrets 5분 회전",
+      "category": "ops", "priority": "P2", "status": "implemented",
+      "description": "AWS Secrets Manager 변경 → ESO 5분 polling → K8s Secret 자동 갱신.",
+      "actors": ["Operator", "AWSSecretsManager", "ESO", "Pod"],
+      "ui": { "layout": "sequence", "tags": ["External Secrets", "AWS SM", "Rotation", "Grace Period"], "estimatedDuration": 320000 },
+      "rules": ["§1.1", "§1.1.1"],
+      "files": ["synapse-gitops/apps/platform-svc/base/externalsecret.yaml"],
+      "steps": [
+        { "n": 1, "from": "Operator", "to": "AWSSecretsManager", "type": "external_api",
+          "action": "synapse/dev/platform-svc/db-password 값 변경", "duration": 30000, "highlight": true },
+        { "n": 2, "from": "ESO", "to": "AWSSecretsManager", "type": "external_api", "action": "5분 주기 polling (refreshInterval: 5m)",
+          "duration": 300000, "highlight": true },
+        { "n": 3, "from": "ESO", "to": "ESO", "type": "internal", "action": "변경 감지", "duration": 5 },
+        { "n": 4, "from": "ESO", "to": "EKS", "type": "k8s_event", "action": "K8s Secret/platform-svc-secret 업데이트 (creationPolicy: Owner)",
+          "duration": 100 },
+        { "n": 5, "from": "EKS", "to": "Pod", "type": "k8s_event", "action": "Pod 재기동 (envFrom 변경 감지 또는 Reloader)",
+          "annotations": ["§1.1.1 Grace Period 24h 동안 옛 비밀번호도 유효 — 무중단 회전"],
+          "duration": 20000, "highlight": true },
+        { "n": 6, "from": "Pod", "to": "PostgreSQL", "type": "db_query", "action": "새 비밀번호로 연결 성공", "duration": 100 }
+      ]
+    },
+
+    {
+      "id": "ops-distributed-tracing",
+      "title": "분산 추적 (traceId 5개 서비스 전파)",
+      "category": "ops", "priority": "P0", "status": "partial",
+      "description": "한 요청이 Gateway → Knowledge → Kafka → LearningAI → Engagement까지. Tempo로 시각화.",
+      "actors": ["Browser", "Gateway", "Knowledge", "Kafka", "LearningAI", "Engagement", "Tempo"],
+      "ui": { "layout": "gantt", "tags": ["W3C traceparent", "Tempo", "OpenTelemetry", "Span"], "estimatedDuration": 3500,
+              "highlights": ["Tempo"] },
+      "rules": ["§9.1"],
+      "steps": [
+        { "n": 1, "from": "Browser", "to": "Gateway", "type": "http_request", "action": "POST /api/v1/notes (traceparent 헤더 자동 생성)",
+          "payload": { "traceparent": "00-7e9a6...trace_id-0a8b...span_id-01" },
+          "duration": 20, "highlight": true },
+        { "n": 2, "from": "Gateway", "to": "Tempo", "type": "external_api", "action": "Gateway span 시작 (트레이스 root)", "duration": 2 },
+        { "n": 3, "from": "Gateway", "to": "Knowledge", "type": "http_request", "action": "traceparent 전파", "duration": 5 },
+        { "n": 4, "from": "Knowledge", "to": "Tempo", "type": "external_api", "action": "Knowledge span 시작 (같은 trace-id)", "duration": 2 },
+        { "n": 5, "from": "Knowledge", "to": "PostgreSQL", "type": "db_query", "action": "DB insert (자식 span)", "duration": 15 },
+        { "n": 6, "from": "Knowledge", "to": "Kafka", "type": "kafka_publish", "action": "publish NoteCreated (헤더에 traceparent 복사)",
+          "topic": "knowledge.note.note-created-v1",
+          "annotations": ["Kafka 비동기 경계 — 헤더로 trace-id 전파"],
+          "duration": 8, "highlight": true },
+        { "n": 7, "from": "Kafka", "to": "LearningAI", "type": "kafka_consume", "action": "헤더에서 traceparent 추출 + 새 span",
+          "topic": "knowledge.note.note-created-v1", "duration": 5 },
+        { "n": 8, "from": "LearningAI", "to": "ClaudeAPI", "type": "external_api", "action": "Claude LLM 호출 (가장 긴 span)",
+          "duration": 2500, "highlight": true },
+        { "n": 9, "from": "Kafka", "to": "Engagement", "type": "kafka_consume", "action": "consume + 새 span",
+          "topic": "knowledge.note.note-created-v1", "duration": 5 },
+        { "n": 10, "from": "Engagement", "to": "PostgreSQL", "type": "db_query", "action": "user_points UPDATE (자식 span)", "duration": 10 },
+        { "n": 11, "from": "Tempo", "to": "Operator", "type": "external_api",
+          "action": "trace-id로 조회 → 5개 서비스 span 트리 시각화",
+          "annotations": ["병목 식별: Claude 호출이 전체의 80%"],
+          "duration": 0, "highlight": true }
+      ]
+    }
+  ]
+}
