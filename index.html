@@ -171,23 +171,23 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <button class="hamburger" onclick="toggleSidebar()" title="메뉴"><i class="ti ti-menu-2"></i></button>
+    <button class="hamburger" onclick="toggleSidebar()" title="메뉴" aria-label="사이드바 메뉴 열기/닫기"><i class="ti ti-menu-2"></i></button>
     <div class="logo"><span>Synapse</span> Flow Simulator</div>
     <div class="view-tabs">
       <button id="tab-arch" class="active" onclick="switchView('arch')">아키텍처 뷰</button>
       <button id="tab-seq" onclick="switchView('seq')">시퀀스 뷰</button>
     </div>
     <div class="nav-controls">
-      <button id="btn-prev" onclick="prevStep()" title="이전 (←)"><i class="ti ti-chevron-left"></i></button>
-      <span class="step-info" id="step-info">- / -</span>
-      <button id="btn-next" onclick="nextStep()" title="다음 (→)"><i class="ti ti-chevron-right"></i></button>
-      <div class="sep"></div>
-      <button id="btn-play" onclick="togglePlay()" title="재생/정지 (Space)"><i class="ti ti-player-play"></i></button>
+      <button id="btn-prev" onclick="prevStep()" title="이전 (←)" aria-label="이전 단계"><i class="ti ti-chevron-left"></i></button>
+      <span class="step-info" id="step-info" aria-live="polite">- / -</span>
+      <button id="btn-next" onclick="nextStep()" title="다음 (→)" aria-label="다음 단계"><i class="ti ti-chevron-right"></i></button>
+      <div class="sep" role="separator"></div>
+      <button id="btn-play" onclick="togglePlay()" title="재생/정지 (Space)" aria-label="재생"><i class="ti ti-player-play"></i></button>
       <button class="speed-btn" id="speed-1x" onclick="setSpeed(2000)">1x</button>
       <button class="speed-btn" id="speed-2x" onclick="setSpeed(1000)">2x</button>
       <button class="speed-btn" id="speed-05x" onclick="setSpeed(4000)">.5x</button>
       <div class="sep"></div>
-      <button onclick="resetSteps()" title="처음으로"><i class="ti ti-player-skip-back"></i></button>
+      <button onclick="resetSteps()" title="처음으로" aria-label="처음으로"><i class="ti ti-player-skip-back"></i></button>
     </div>
   </div>
 
