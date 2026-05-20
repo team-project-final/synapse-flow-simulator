@@ -25,7 +25,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 
 /* Layout */
-.app{display:grid;height:100vh;grid-template-rows:var(--header-h) 1fr var(--log-h);grid-template-columns:var(--sidebar-w) 1fr var(--detail-w)}
+.app{display:grid;height:100dvh;height:100vh;grid-template-rows:var(--header-h) 1fr var(--log-h);grid-template-columns:var(--sidebar-w) 1fr var(--detail-w)}
+@supports(height:100dvh){.app{height:100dvh}}
 .header{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border);z-index:10}
 .sidebar{grid-row:2;overflow-y:auto;background:var(--bg-secondary);border-right:1px solid var(--border);padding:8px 0}
 .main-view{grid-row:2;position:relative;overflow:hidden;background:var(--bg)}
