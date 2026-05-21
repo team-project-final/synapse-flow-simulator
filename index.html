@@ -208,6 +208,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
     <div class="view-tabs">
       <button id="tab-arch" class="active" onclick="switchView('arch')">아키텍처 뷰</button>
       <button id="tab-seq" onclick="switchView('seq')">시퀀스 뷰</button>
+      <button id="tab-ux" onclick="switchView('ux')">사용자 경험 뷰</button>
     </div>
     <div class="nav-controls">
       <button id="btn-prev" onclick="prevStep()" title="이전 (←)" aria-label="이전 단계"><i class="ti ti-chevron-left"></i></button>
@@ -472,19 +473,21 @@ function switchView(view) {
   currentView = view;
   document.getElementById('tab-arch').classList.toggle('active', view === 'arch');
   document.getElementById('tab-seq').classList.toggle('active', view === 'seq');
+  document.getElementById('tab-ux').classList.toggle('active', view === 'ux');
   if (currentScenario) renderView();
 }
 
 function renderView() {
   if (!currentScenario) return;
   if (currentView === 'arch') renderArchView();
-  else renderSeqView();
+  else if (currentView === 'seq') renderSeqView();
+  else if (currentView === 'ux') renderUxView();
 }
 
 // ── Architecture View ──
 function renderArchView() {
   const mv = document.getElementById('main-view');
-  const actors = getScenarioActors();
+  const actors = getFilteredActors();
   // Group by kind rows
   const kindOrder = ['client','screen','edge','service','ops','k8s','broker','datastore','external'];
   const rows = {};
@@ -495,7 +498,8 @@ function renderArchView() {
   });
   const orderedRows = kindOrder.filter(k => rows[k]).map(k => rows[k]);
 
-  const step = currentScenario.steps[currentStep];
+  const allSteps = getFilteredSteps();
+  const step = allSteps[Math.min(currentStep, allSteps.length - 1)];
   const fromId = step?.from;
   const toId = step?.to;
 
@@ -592,8 +596,8 @@ function drawArchArrow(step, positions) {
 // ── Sequence View ──
 function renderSeqView() {
   const mv = document.getElementById('main-view');
-  const actors = getScenarioActors();
-  const steps = currentScenario.steps;
+  const actors = getFilteredActors();
+  const steps = getFilteredSteps();
   const colW = Math.max(120, Math.min(160, (mv.getBoundingClientRect().width - 40) / actors.length));
   const actorIdx = {};
   actors.forEach((a, i) => actorIdx[a.id] = i);
@@ -621,11 +625,12 @@ function renderSeqView() {
   });
 
   // Messages
+  const mappedStep = Math.min(currentStep, steps.length - 1);
   steps.forEach((step, si) => {
     const fi = actorIdx[step.from] ?? 0;
     const ti = actorIdx[step.to] ?? 0;
-    const isCurrent = si === currentStep;
-    const isFuture = si > currentStep;
+    const isCurrent = si === mappedStep;
+    const isFuture = si > mappedStep;
     const cls = isCurrent ? 'current' : (isFuture ? 'future' : '');
     const typeStyle = TYPE_ARROW[step.type] || TYPE_ARROW.internal;
 
@@ -672,7 +677,7 @@ function renderSeqView() {
   // Scroll to current step
   const seqView = mv.querySelector('.seq-view');
   if (seqView) {
-    const targetY = currentStep * rowH;
+    const targetY = mappedStep * rowH;
     seqView.scrollTop = Math.max(0, targetY - 120);
   }
 }
@@ -888,6 +893,23 @@ function getScenarioActors() {
   const ids = new Set(currentScenario.actors || []);
   currentScenario.steps.forEach(s => { ids.add(s.from); ids.add(s.to); });
   return Array.from(ids).map(id => actorMap[id]).filter(Boolean);
+}
+
+function getFilteredSteps() {
+  if (!currentScenario) return [];
+  if (currentView === 'ux') return currentScenario.steps;
+  return currentScenario.steps.filter(s => s.type !== 'ui_action');
+}
+
+function getFilteredActors() {
+  if (!currentScenario) return [];
+  if (currentView === 'ux') return getScenarioActors();
+  return getScenarioActors().filter(a => a.kind !== 'screen');
+}
+
+function hasScreenActors() {
+  if (!currentScenario) return false;
+  return getScenarioActors().some(a => a.kind === 'screen');
 }
 
 function escapeHtml(s) {
