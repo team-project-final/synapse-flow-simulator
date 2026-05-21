@@ -30,6 +30,27 @@
       "color": "amber",
       "description": "ArgoCD · ESO · Tempo · Image Updater",
       "scenarioIds": ["ops-argocd-sync", "ops-image-updater", "ops-eso-rotation", "ops-distributed-tracing"]
+    },
+    {
+      "id": "journey-learner",
+      "label": "학습자 여정",
+      "color": "green",
+      "description": "P1·P2·P3 페르소나 사용자 여정",
+      "scenarioIds": ["journey-p1-note-graph-share", "journey-p2-paper-ai-search", "journey-p3-onboard-routine-subscribe"]
+    },
+    {
+      "id": "journey-admin",
+      "label": "관리자 여정",
+      "color": "purple",
+      "description": "P4 관리자 일과 여정",
+      "scenarioIds": ["journey-p4-admin-daily"]
+    },
+    {
+      "id": "supplement",
+      "label": "보충 흐름",
+      "color": "cyan",
+      "description": "게이미피케이션 · 알림 · 데이터 내보내기",
+      "scenarioIds": ["supplement-gamification", "supplement-notification", "supplement-data-export"]
     }
   ],
 
@@ -72,7 +93,29 @@
 
     { "id": "User",            "label": "사용자",                "kind": "client",    "color": "gray",   "icon": "ti-user" },
     { "id": "Developer",       "label": "개발자",                "kind": "client",    "color": "gray",   "icon": "ti-code" },
-    { "id": "Operator",        "label": "운영자",                "kind": "client",    "color": "gray",   "icon": "ti-user-cog" }
+    { "id": "Operator",        "label": "운영자",                "kind": "client",    "color": "gray",   "icon": "ti-user-cog" },
+
+    { "id": "SCR-AUTH-001",    "label": "로그인 화면",           "kind": "screen", "color": "green", "icon": "ti-app-window" },
+    { "id": "SCR-AUTH-002",    "label": "회원가입 화면",         "kind": "screen", "color": "green", "icon": "ti-app-window" },
+    { "id": "SCR-AUTH-003",    "label": "MFA 설정",              "kind": "screen", "color": "green", "icon": "ti-app-window" },
+    { "id": "SCR-DASH-001",    "label": "대시보드",              "kind": "screen", "color": "green", "icon": "ti-app-window" },
+    { "id": "SCR-NOTE-001",    "label": "노트 목록",             "kind": "screen", "color": "green", "icon": "ti-app-window" },
+    { "id": "SCR-NOTE-002",    "label": "노트 에디터",           "kind": "screen", "color": "green", "icon": "ti-app-window" },
+    { "id": "SCR-GRAPH-001",   "label": "전체 그래프",           "kind": "screen", "color": "green", "icon": "ti-app-window" },
+    { "id": "SCR-CARD-001",    "label": "덱 목록",               "kind": "screen", "color": "green", "icon": "ti-app-window" },
+    { "id": "SCR-CARD-005",    "label": "복습 세션",             "kind": "screen", "color": "green", "icon": "ti-app-window" },
+    { "id": "SCR-SEARCH-001",  "label": "검색",                  "kind": "screen", "color": "green", "icon": "ti-app-window" },
+    { "id": "SCR-BILLING-001", "label": "플랜/결제",             "kind": "screen", "color": "green", "icon": "ti-app-window" },
+    { "id": "SCR-COMM-001",    "label": "커뮤니티 목록",         "kind": "screen", "color": "green", "icon": "ti-app-window" },
+    { "id": "SCR-COMM-004",    "label": "공유 덱 탐색",          "kind": "screen", "color": "green", "icon": "ti-app-window" },
+    { "id": "SCR-GAME-001",    "label": "게이미피케이션 프로필", "kind": "screen", "color": "green", "icon": "ti-app-window" },
+    { "id": "SCR-NOTI-001",    "label": "알림 센터",             "kind": "screen", "color": "green", "icon": "ti-app-window" },
+    { "id": "SCR-ADMIN-001",   "label": "관리자 대시보드",       "kind": "screen", "color": "green", "icon": "ti-app-window" },
+
+    { "id": "Stripe",          "label": "Stripe",                "kind": "external", "color": "gray",  "icon": "ti-credit-card" },
+    { "id": "FCM",             "label": "FCM (Push)",            "kind": "external", "color": "gray",  "icon": "ti-bell" },
+    { "id": "Elasticsearch",   "label": "Elasticsearch",         "kind": "datastore", "color": "teal", "icon": "ti-search" },
+    { "id": "Cron",            "label": "Cron Scheduler",        "kind": "ops",      "color": "amber", "icon": "ti-clock" }
   ],
 
   "topics": [
