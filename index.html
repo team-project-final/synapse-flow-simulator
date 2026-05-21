@@ -194,9 +194,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
   .detail-toggle{display:flex}
   .detail-overlay{display:none;position:fixed;inset:0;top:var(--header-h);background:rgba(0,0,0,.4);z-index:17}
   .detail-overlay.open{display:block}
-  .ux-flow{flex-direction:column;align-items:stretch}
-  .ux-card{max-width:none;min-width:0}
-  .ux-connector{transform:rotate(90deg);justify-content:center;margin:0;padding:var(--sp-1) 0}
+  .ux-flow{grid-template-columns:1fr}
 }
 .detail-toggle{display:none;position:fixed;bottom:calc(var(--log-h) + 12px);right:12px;z-index:16;width:44px;height:44px;border-radius:50%;background:var(--blue);color:#fff;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.3);border:none;cursor:pointer}
 
@@ -206,8 +204,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 .ux-empty i{font-size:48px}
 .ux-empty a{color:var(--cyan);cursor:pointer;text-decoration:none}
 .ux-empty a:hover{text-decoration:underline}
-.ux-flow{display:flex;gap:var(--sp-4);align-items:flex-start;min-height:200px;padding-bottom:var(--sp-4)}
-.ux-card{min-width:200px;max-width:240px;background:var(--bg-card);border:2px solid var(--border);border-radius:12px;padding:var(--sp-3);flex-shrink:0;transition:border-color .3s,box-shadow .3s}
+.ux-flow{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--sp-4);min-height:200px;padding-bottom:var(--sp-4)}
+.ux-card{position:relative;background:var(--bg-card);border:2px solid var(--border);border-radius:12px;padding:var(--sp-3);transition:border-color .3s,box-shadow .3s}
 .ux-card.active{border-color:var(--ui-action);box-shadow:0 0 12px rgba(74,222,128,.2)}
 .ux-card-header{display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-2);padding-bottom:var(--sp-2);border-bottom:1px solid var(--border)}
 .ux-card-header i{font-size:18px;color:var(--ui-action)}
@@ -220,7 +218,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 .ux-card-apis{border-top:1px solid var(--border);padding-top:var(--sp-2);display:flex;flex-wrap:wrap;gap:4px}
 .ux-api-badge{font-size:9px;padding:1px 6px;border-radius:3px;border:1px solid var(--border);color:var(--text-muted);transition:border-color .3s,color .3s}
 .ux-api-badge.active{border-color:var(--blue);color:var(--blue);animation:glowPulse 2s ease-in-out infinite;--glow-color:rgba(79,195,247,.15)}
-.ux-connector{display:flex;align-items:center;flex-shrink:0;color:var(--text-dim);font-size:18px;margin:0 -4px}
+.ux-connector{display:none}
+.ux-card-order{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:var(--ui-action);color:var(--bg);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
 
 /* Mode System */
 .mode-switcher{display:flex;gap:2px;background:var(--bg-tertiary);border-radius:8px;padding:2px;margin-left:var(--sp-3)}
@@ -1155,6 +1154,7 @@ function renderUxView() {
                      screen.apis.some(a => a.stepIdx === currentStep);
 
     html += `<div class="ux-card ${isActive ? 'active' : ''}">`;
+    html += `<span class="ux-card-order">${idx + 1}</span>`;
     html += `<div class="ux-card-header"><i class="${screen.icon}"></i><span>${escapeHtml(screen.label)}</span></div>`;
     if (screen.actions.length) {
       html += '<div class="ux-card-actions">';
