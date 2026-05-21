@@ -15,7 +15,7 @@
   --border:#1e3a5f;--text:#E8E0D8;--text-muted:#8a9ab5;--text-dim:#556b8a;
   --blue:#4FC3F7;--teal:#26c6da;--coral:#ff8a65;--amber:#ffb74d;--pink:#f06292;
   --purple:#b39ddb;--red:#ef5350;--green:#66bb6a;--gray:#78909c;--cyan:#4FC3F7;--ui-action:#4ade80;
-  --sidebar-w:220px;--detail-w:280px;--log-h:140px;--header-h:48px;
+  --sidebar-w:280px;--detail-w:280px;--log-h:140px;--header-h:48px;
   --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;--sp-6:24px;--sp-8:32px;
 }
 html,body{height:100%;font-family:'IBM Plex Mono','Cascadia Code','Fira Code',monospace;background:var(--bg);color:var(--text);overflow:hidden}
@@ -58,7 +58,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 .sidebar .cat-group{margin-bottom:4px}
 .sidebar .cat-header{padding:var(--sp-2) var(--sp-3) var(--sp-1);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);display:flex;align-items:center;gap:var(--sp-2)}
 .sidebar .cat-dot{width:var(--sp-2);height:var(--sp-2);border-radius:50%;flex-shrink:0}
-.sidebar .sc-item{padding:var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-6);font-size:12.5px;cursor:pointer;transition:.12s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted);border-radius:0 var(--sp-2) var(--sp-2) 0;margin-right:var(--sp-2);width:calc(100% - var(--sp-2));text-align:left;font-family:inherit;background:none;border:none}
+.sidebar .sc-item{padding:var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-6);font-size:12.5px;cursor:pointer;transition:.12s;color:var(--text-muted);border-radius:0 var(--sp-2) var(--sp-2) 0;margin-right:var(--sp-2);width:calc(100% - var(--sp-2));text-align:left;font-family:inherit;background:none;border:none;line-height:1.4}
 .sidebar .sc-item:hover{background:var(--bg-tertiary);color:var(--text)}
 .sidebar .sc-item.active{background:rgba(79,195,247,.08);color:var(--cyan);font-weight:500;border-left:2px solid var(--cyan)}
 .sidebar .sc-item .status-dot{display:inline-block;width:var(--sp-2);height:var(--sp-2);border-radius:50%;margin-right:var(--sp-2)}
