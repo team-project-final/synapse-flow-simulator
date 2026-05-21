@@ -1101,20 +1101,19 @@ function renderSeqView() {
     mv.querySelector('.seq-view')?.prepend(overlay);
   }
 
-  // Auto-fit: calculate zoom to fit content in viewport
+  // Auto-fit: ensure minimum font size ~18px (base is ~10px, so min zoom 1.8x)
+  // For small scenarios, zoom up to fill. For large, cap at 1.8x and allow scroll.
+  const minReadableZoom = 1.8;
   const contentW = actors.length * colW + 48;
   const contentH = totalH + 60;
   const mvRect2 = mv.getBoundingClientRect();
   const fitZoomX = mvRect2.width / contentW;
   const fitZoomY = mvRect2.height / contentH;
   const fitZoom = Math.min(fitZoomX, fitZoomY);
-  if (fitZoom < 0.95 || fitZoom > 1.5) {
-    zoomLevel = Math.max(0.4, Math.min(1.5, fitZoom * 0.95));
-    panX = 0; panY = 0;
-    applyZoomPan();
-  } else {
-    zoomLevel = 1; panX = 0; panY = 0;
-  }
+  // Use the larger of fit-to-viewport or minimum readable size
+  zoomLevel = Math.max(minReadableZoom, Math.min(3, fitZoom * 0.95));
+  panX = 0; panY = 0;
+  applyZoomPan();
 
   // Scroll to current step
   const seqView = mv.querySelector('.seq-view');
