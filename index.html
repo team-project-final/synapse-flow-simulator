@@ -170,6 +170,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 .type-ui_action{background:transparent;color:var(--ui-action);border:1px solid rgba(74,222,128,.4)}
 
 /* Responsive */
+@media(min-width:901px) and (max-width:1200px){
+  .app{grid-template-columns:180px 1fr 240px}
+  .sidebar{width:180px}
+  .detail-panel{width:240px}
+  .app.mode-reference{grid-template-columns:240px 1fr 240px}
+}
 @media(max-width:900px){
   .sidebar{position:fixed;left:0;top:var(--header-h);bottom:0;width:var(--sidebar-w);z-index:20;transform:translateX(-100%);transition:transform .25s}
   .sidebar.open{transform:translateX(0)}
@@ -186,6 +192,9 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
   .detail-toggle{display:flex}
   .detail-overlay{display:none;position:fixed;inset:0;top:var(--header-h);background:rgba(0,0,0,.4);z-index:17}
   .detail-overlay.open{display:block}
+  .ux-flow{flex-direction:column;align-items:stretch}
+  .ux-card{max-width:none;min-width:0}
+  .ux-connector{transform:rotate(90deg);justify-content:center;margin:0;padding:var(--sp-1) 0}
 }
 .detail-toggle{display:none;position:fixed;bottom:calc(var(--log-h) + 12px);right:12px;z-index:16;width:44px;height:44px;border-radius:50%;background:var(--blue);color:#fff;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.3);border:none;cursor:pointer}
 
@@ -446,6 +455,47 @@ function initZoomPan() {
   window.addEventListener('mouseup', () => {
     if (isPanning) { isPanning = false; document.getElementById('main-view').style.cursor = ''; }
   });
+}
+
+// ── Touch Gestures ──
+function initTouchGestures() {
+  const mv = document.getElementById('main-view');
+  let touchStartX = 0, touchStartY = 0, touchStartDist = 0;
+
+  mv.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) { touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; }
+    else if (e.touches.length === 2 && currentView !== 'ux') {
+      touchStartDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+    }
+  }, { passive: true });
+
+  mv.addEventListener('touchend', e => {
+    if (e.changedTouches.length === 1) {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        if (dx > 0) prevStep(); else nextStep();
+      }
+    }
+  }, { passive: true });
+
+  mv.addEventListener('touchmove', e => {
+    if (e.touches.length === 2 && currentView !== 'ux') {
+      const dist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+      if (touchStartDist > 0) {
+        const scale = dist / touchStartDist;
+        if (scale > 1.05) { zoomIn(); touchStartDist = dist; }
+        else if (scale < 0.95) { zoomOut(); touchStartDist = dist; }
+      }
+    }
+  }, { passive: true });
+
+  let lastTap = 0;
+  mv.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTap < 300 && e.changedTouches.length === 1) resetZoom();
+    lastTap = now;
+  }, { passive: true });
 }
 
 // ── Init ──
@@ -1304,6 +1354,7 @@ window.addEventListener('resize', () => {
 initColors();
 initMode();
 initZoomPan();
+initTouchGestures();
 init();
 </script>
 </body>
