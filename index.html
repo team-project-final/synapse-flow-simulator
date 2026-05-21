@@ -403,6 +403,7 @@ function setMode(mode) {
     renderView();
     renderDetail();
   }
+  updateHash();
 }
 
 function applyMode() {
@@ -457,6 +458,50 @@ function initZoomPan() {
   });
 }
 
+// ── URL Hash Deep Links ──
+function updateHash() {
+  const parts = [];
+  if (currentMode !== 'learn') parts.push(`mode=${currentMode}`);
+  if (currentScenario) parts.push(`scenario=${currentScenario.id}`);
+  if (currentStep > 0) parts.push(`step=${currentStep + 1}`);
+  if (currentView !== 'arch') parts.push(`view=${currentView}`);
+  const hash = parts.length ? '#' + parts.join('&') : '';
+  if (window.location.hash !== hash) {
+    history.replaceState(null, '', hash || window.location.pathname);
+  }
+}
+
+function parseHash() {
+  const hash = window.location.hash.slice(1);
+  const params = {};
+  hash.split('&').forEach(pair => {
+    const [k, v] = pair.split('=');
+    if (k && v) params[k] = v;
+  });
+  return params;
+}
+
+function restoreFromHash() {
+  const params = parseHash();
+  if (params.mode && ['learn', 'presentation', 'reference'].includes(params.mode)) {
+    currentMode = params.mode;
+    applyMode();
+  }
+  if (params.view && ['arch', 'seq', 'ux'].includes(params.view)) {
+    switchView(params.view);
+  }
+  if (params.scenario && data) {
+    selectScenario(params.scenario);
+    if (params.step) {
+      const stepNum = parseInt(params.step, 10) - 1;
+      if (stepNum >= 0 && stepNum < currentScenario?.steps.length) {
+        currentStep = stepNum;
+        onStepChange();
+      }
+    }
+  }
+}
+
 // ── Touch Gestures ──
 function initTouchGestures() {
   const mv = document.getElementById('main-view');
@@ -506,6 +551,7 @@ async function init() {
     data.actors.forEach(a => actorMap[a.id] = a);
     renderSidebar();
     updateSpeedButtons();
+    restoreFromHash();
   } catch(e) {
     console.error('Failed to load scenarios:', e);
     document.getElementById('empty-state').innerHTML = '<i class="ti ti-alert-triangle" style="font-size:48px;color:var(--red)"></i><p>데이터 로드 실패</p><p style="font-size:11px;color:var(--text-dim)">' + e.message + '</p>';
@@ -648,6 +694,7 @@ function selectScenario(id) {
   renderDetail();
   updateStepInfo();
   logStep(0);
+  updateHash();
   // close sidebar on mobile
   if (window.innerWidth <= 900) toggleSidebar(false);
 }
@@ -659,6 +706,7 @@ function switchView(view) {
   document.getElementById('tab-seq').classList.toggle('active', view === 'seq');
   document.getElementById('tab-ux').classList.toggle('active', view === 'ux');
   if (currentScenario) renderView();
+  updateHash();
 }
 
 function renderView() {
@@ -1194,6 +1242,7 @@ function onStepChange() {
   renderDetail();
   updateStepInfo();
   logStep(currentStep);
+  updateHash();
 }
 
 function togglePlay() {
