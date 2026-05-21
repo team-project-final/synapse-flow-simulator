@@ -246,6 +246,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 .zoom-controls button{width:32px;height:32px;border-radius:6px;background:var(--bg-card);border:1px solid var(--border);color:var(--text);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s}
 .zoom-controls button:hover{background:var(--border)}
 
+/* Minimap */
+.minimap{position:absolute;bottom:calc(var(--sp-3) + 110px);right:var(--sp-3);width:140px;height:90px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;z-index:6;overflow:hidden;cursor:pointer;opacity:.85;transition:opacity .15s}
+.minimap:hover{opacity:1}
+.minimap canvas{width:100%;height:100%}
+.minimap .viewport-rect{position:absolute;border:1.5px solid var(--cyan);background:rgba(79,195,247,.08);pointer-events:none;transition:all .1s}
+
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-dim);gap:var(--sp-2)}
 .empty-state i{font-size:48px}
 .empty-state p{font-size:14px}
@@ -432,6 +438,80 @@ function applyZoomPan() {
   const svg = container.querySelector('svg');
   const transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
   [inner, svg].forEach(el => { if (el) { el.style.transform = transform; el.style.transformOrigin = '0 0'; }});
+  updateMinimap();
+}
+
+function renderMinimap() {
+  // Only show when zoomed and enough actors
+  const actors = currentScenario ? getFilteredActors() : [];
+  const mm = document.getElementById('minimap');
+  if (mm) mm.remove();
+  if (currentMode === 'presentation' || currentView === 'ux' || actors.length <= 8 || zoomLevel <= 1.05) return;
+
+  const mv = document.getElementById('main-view');
+  const container = document.createElement('div');
+  container.className = 'minimap';
+  container.id = 'minimap';
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 280;
+  canvas.height = 180;
+  container.appendChild(canvas);
+
+  const vpRect = document.createElement('div');
+  vpRect.className = 'viewport-rect';
+  vpRect.id = 'minimap-vp';
+  container.appendChild(vpRect);
+
+  container.addEventListener('click', e => {
+    const rect = container.getBoundingClientRect();
+    const clickX = (e.clientX - rect.left) / rect.width;
+    const clickY = (e.clientY - rect.top) / rect.height;
+    const mvRect = mv.getBoundingClientRect();
+    const contentW = mvRect.width * zoomLevel;
+    const contentH = mvRect.height * zoomLevel;
+    panX = -(clickX * contentW - mvRect.width / 2);
+    panY = -(clickY * contentH - mvRect.height / 2);
+    applyZoomPan();
+  });
+
+  mv.appendChild(container);
+
+  // Draw actor dots on canvas
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 280, 180);
+  const actorBoxes = mv.querySelectorAll('.actor-box');
+  const mvRect = mv.getBoundingClientRect();
+  actorBoxes.forEach(box => {
+    const left = parseFloat(box.style.left) || 0;
+    const top = parseFloat(box.style.top) || 0;
+    const nx = (left + 50) / mvRect.width * 280;
+    const ny = (top + 25) / mvRect.height * 180;
+    const color = box.classList.contains('active') ? '#4FC3F7' : '#1e3a5f';
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(nx, ny, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  updateMinimap();
+}
+
+function updateMinimap() {
+  const vp = document.getElementById('minimap-vp');
+  if (!vp) return;
+  const mv = document.getElementById('main-view');
+  const mvRect = mv.getBoundingClientRect();
+  const contentW = mvRect.width * zoomLevel;
+  const contentH = mvRect.height * zoomLevel;
+  const vpW = (mvRect.width / contentW) * 100;
+  const vpH = (mvRect.height / contentH) * 100;
+  const vpX = (-panX / contentW) * 100;
+  const vpY = (-panY / contentH) * 100;
+  vp.style.left = Math.max(0, vpX) + '%';
+  vp.style.top = Math.max(0, vpY) + '%';
+  vp.style.width = Math.min(100, vpW) + '%';
+  vp.style.height = Math.min(100, vpH) + '%';
 }
 function initZoomPan() {
   const mv = document.getElementById('main-view');
@@ -786,8 +866,11 @@ function renderArchView() {
     mv.appendChild(zc);
   }
 
-  // Draw arrow
-  requestAnimationFrame(() => drawArchArrow(step, positions));
+  // Minimap + Draw arrow
+  requestAnimationFrame(() => {
+    drawArchArrow(step, positions);
+    renderMinimap();
+  });
 }
 
 function buildBezierPath(from, to, isSelf) {
@@ -969,6 +1052,7 @@ function renderSeqView() {
     const targetY = mappedStep * rowH;
     seqView.scrollTop = Math.max(0, targetY - 120);
   }
+  renderMinimap();
 }
 
 // ── UX View ──
