@@ -189,6 +189,28 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 }
 .detail-toggle{display:none;position:fixed;bottom:calc(var(--log-h) + 12px);right:12px;z-index:16;width:44px;height:44px;border-radius:50%;background:var(--blue);color:#fff;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.3);border:none;cursor:pointer}
 
+/* UX View */
+.ux-view{width:100%;height:100%;overflow-x:auto;overflow-y:auto;padding:var(--sp-4);display:flex;flex-direction:column}
+.ux-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-dim);gap:var(--sp-3);text-align:center}
+.ux-empty i{font-size:48px}
+.ux-empty a{color:var(--cyan);cursor:pointer;text-decoration:none}
+.ux-empty a:hover{text-decoration:underline}
+.ux-flow{display:flex;gap:var(--sp-4);align-items:flex-start;min-height:200px;padding-bottom:var(--sp-4)}
+.ux-card{min-width:200px;max-width:240px;background:var(--bg-card);border:2px solid var(--border);border-radius:12px;padding:var(--sp-3);flex-shrink:0;transition:border-color .3s,box-shadow .3s}
+.ux-card.active{border-color:var(--ui-action);box-shadow:0 0 12px rgba(74,222,128,.2)}
+.ux-card-header{display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-2);padding-bottom:var(--sp-2);border-bottom:1px solid var(--border)}
+.ux-card-header i{font-size:18px;color:var(--ui-action)}
+.ux-card-header span{font-size:12px;font-weight:600;color:var(--text)}
+.ux-card-actions{margin-bottom:var(--sp-2)}
+.ux-action-item{display:flex;align-items:flex-start;gap:var(--sp-2);font-size:11px;color:var(--text-muted);padding:3px 0;border-radius:4px;transition:background .15s}
+.ux-action-item.active{background:rgba(74,222,128,.1);color:var(--ui-action)}
+.ux-action-item::before{content:'○';font-size:10px;color:var(--text-dim);margin-top:1px;flex-shrink:0}
+.ux-action-item.active::before{content:'●';color:var(--ui-action)}
+.ux-card-apis{border-top:1px solid var(--border);padding-top:var(--sp-2);display:flex;flex-wrap:wrap;gap:4px}
+.ux-api-badge{font-size:9px;padding:1px 6px;border-radius:3px;border:1px solid var(--border);color:var(--text-muted);transition:border-color .3s,color .3s}
+.ux-api-badge.active{border-color:var(--blue);color:var(--blue);animation:glowPulse 2s ease-in-out infinite;--glow-color:rgba(79,195,247,.15)}
+.ux-connector{display:flex;align-items:center;flex-shrink:0;color:var(--text-dim);font-size:18px;margin:0 -4px}
+
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-dim);gap:var(--sp-2)}
 .empty-state i{font-size:48px}
 .empty-state p{font-size:14px}
@@ -680,6 +702,100 @@ function renderSeqView() {
     const targetY = mappedStep * rowH;
     seqView.scrollTop = Math.max(0, targetY - 120);
   }
+}
+
+// ── UX View ──
+function renderUxView() {
+  const mv = document.getElementById('main-view');
+  if (!hasScreenActors()) {
+    const journeyScenarios = data.scenarios.filter(s =>
+      s.category === 'journey-learner' || s.category === 'journey-admin'
+    );
+    let links = journeyScenarios.slice(0, 3).map(s =>
+      `<a onclick="selectScenario('${s.id}')">${escapeHtml(s.title)}</a>`
+    ).join('<br>');
+    mv.innerHTML = `<div class="ux-empty">
+      <i class="ti ti-device-mobile-off"></i>
+      <p style="font-size:14px">이 시나리오에는 사용자 경험 흐름이<br>정의되어 있지 않습니다</p>
+      <div style="font-size:12px;margin-top:var(--sp-2)">
+        <p style="margin-bottom:var(--sp-2)">다음 여정 시나리오를 확인해보세요:</p>
+        ${links}
+      </div>
+    </div>`;
+    return;
+  }
+
+  const screens = buildScreenCards();
+  let html = '<div class="ux-view"><div class="ux-flow">';
+
+  screens.forEach((screen, idx) => {
+    const isActive = screen.actions.some(a => a.stepIdx === currentStep) ||
+                     screen.apis.some(a => a.stepIdx === currentStep);
+
+    html += `<div class="ux-card ${isActive ? 'active' : ''}">`;
+    html += `<div class="ux-card-header"><i class="${screen.icon}"></i><span>${escapeHtml(screen.label)}</span></div>`;
+    if (screen.actions.length) {
+      html += '<div class="ux-card-actions">';
+      screen.actions.forEach(a => {
+        const isCurrentAction = a.stepIdx === currentStep;
+        html += `<div class="ux-action-item ${isCurrentAction ? 'active' : ''}">${escapeHtml(a.action)}</div>`;
+      });
+      html += '</div>';
+    }
+    if (screen.apis.length) {
+      html += '<div class="ux-card-apis">';
+      screen.apis.forEach(a => {
+        const isCurrentApi = a.stepIdx === currentStep;
+        html += `<span class="ux-api-badge ${isCurrentApi ? 'active' : ''}">${escapeHtml(truncate(a.action, 25))}</span>`;
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+    if (idx < screens.length - 1) {
+      html += '<div class="ux-connector"><i class="ti ti-chevron-right"></i></div>';
+    }
+  });
+
+  html += '</div></div>';
+  mv.innerHTML = html;
+
+  const activeCard = mv.querySelector('.ux-card.active');
+  if (activeCard) {
+    activeCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }
+}
+
+function buildScreenCards() {
+  const steps = currentScenario.steps;
+  const cards = [];
+  let currentScreenCard = null;
+
+  steps.forEach((step, idx) => {
+    if (step.type === 'ui_action') {
+      const toActor = actorMap[step.to];
+      const fromActor = actorMap[step.from];
+      const screenActor = (toActor?.kind === 'screen') ? toActor : (fromActor?.kind === 'screen' ? fromActor : null);
+      if (screenActor) {
+        let card = (cards.length > 0 && cards[cards.length - 1].id === screenActor.id) ? cards[cards.length - 1] : null;
+        if (!card) {
+          card = {
+            id: screenActor.id,
+            label: screenActor.label,
+            icon: screenActor.icon || 'ti ti-app-window',
+            actions: [],
+            apis: []
+          };
+          cards.push(card);
+        }
+        card.actions.push({ action: step.action, stepIdx: idx });
+        currentScreenCard = card;
+      }
+    } else if (currentScreenCard) {
+      currentScreenCard.apis.push({ action: step.action, stepIdx: idx });
+    }
+  });
+
+  return cards;
 }
 
 // ── Detail Panel ──
