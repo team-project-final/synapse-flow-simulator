@@ -32,7 +32,14 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 .sidebar{grid-row:2;overflow-y:auto;background:var(--bg-secondary);border-right:1px solid var(--border);padding:var(--sp-2) 0}
 .main-view{grid-row:2;position:relative;overflow:hidden;background:var(--bg);background-image:repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(30,58,95,.25) 39px,rgba(30,58,95,.25) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(30,58,95,.25) 39px,rgba(30,58,95,.25) 40px)}
 .detail-panel{grid-row:2;overflow-y:auto;background:var(--bg-secondary);border-left:1px solid var(--border);padding:var(--sp-3)}
-.log-panel{grid-column:1/-1;grid-row:3;overflow-y:auto;background:#060e1a;border-top:1px solid var(--border);padding:var(--sp-2) var(--sp-3);font-family:'IBM Plex Mono','Cascadia Code','Fira Code',monospace;font-size:12px;line-height:1.6}
+.log-panel{grid-column:1/-1;grid-row:3;overflow:hidden;background:#060e1a;border-top:1px solid var(--border);font-family:'IBM Plex Mono','Cascadia Code','Fira Code',monospace;font-size:12px;line-height:1.6;display:flex}
+.log-left{flex:1;overflow-y:auto;padding:var(--sp-2) var(--sp-3)}
+.log-right{width:0;overflow-y:auto;padding:0;border-left:none;transition:width .3s ease,padding .3s ease}
+.app.mode-learn .log-right,.app.mode-reference .log-right{width:40%;padding:var(--sp-2) var(--sp-3);border-left:1px solid var(--border)}
+.log-right .step-explain-title{font-size:11px;font-weight:600;color:var(--teal);margin-bottom:var(--sp-1);text-transform:uppercase;letter-spacing:.4px}
+.log-right .step-explain-body{font-size:12px;color:var(--text-muted);line-height:1.7}
+.log-right .step-explain-body strong{color:var(--text);font-weight:600}
+.log-right .step-explain-meta{font-size:10px;color:var(--text-dim);margin-top:var(--sp-2);padding-top:var(--sp-1);border-top:1px solid var(--border)}
 
 /* Header */
 .header .logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;white-space:nowrap;letter-spacing:-.3px}
@@ -227,7 +234,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 .mode-switcher button.active{background:rgba(79,195,247,.15);color:var(--cyan)}
 .app.mode-presentation{grid-template-columns:0 1fr 0;grid-template-rows:var(--header-h) 1fr 0}
 .app.mode-presentation .sidebar{transform:translateX(-100%);position:fixed;z-index:20}
-.app.mode-presentation .detail-panel{position:fixed;bottom:0;left:0;right:0;height:auto;max-height:60px;padding:var(--sp-2) var(--sp-4);border-left:none;border-top:1px solid var(--border);z-index:10;overflow:hidden;grid-row:auto;top:auto;width:100%}
+.app.mode-presentation .detail-panel{position:fixed;bottom:0;left:0;right:0;height:auto;max-height:120px;padding:var(--sp-3) var(--sp-6);border-left:none;border-top:1px solid var(--border);z-index:10;overflow:hidden;grid-row:auto;top:auto;width:100%;background:rgba(6,14,26,.95);backdrop-filter:blur(8px)}
 .app.mode-presentation .log-panel{display:none}
 .app.mode-presentation .main-view{grid-column:1/-1}
 .app.mode-presentation .scenario-title-overlay{position:absolute;top:var(--sp-4);left:50%;transform:translateX(-50%);font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:var(--text);z-index:5;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,.5)}
@@ -321,7 +328,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 
   <!-- Log Panel -->
   <footer class="log-panel" id="log-panel" role="log" aria-label="실행 로그">
-    <div style="color:var(--text-dim);font-size:11px">[ Synapse Flow Simulator — 로그 패널 ]</div>
+    <div class="log-left" id="log-left">
+      <div style="color:var(--text-dim);font-size:11px">[ Synapse Flow Simulator — 로그 패널 ]</div>
+    </div>
+    <div class="log-right" id="log-right"></div>
   </footer>
 </div>
 
@@ -1226,11 +1236,23 @@ function renderDetail() {
   const sc = currentScenario;
   const step = sc.steps[currentStep];
 
-  // Presentation mode: minimal detail
+  // Presentation mode: enriched bottom bar
   if (currentMode === 'presentation') {
     if (step) {
-      dc.innerHTML = `<div style="font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-        <strong>${step.n}</strong> ${escapeHtml(step.action)}
+      const fromActor = actorMap[step.from];
+      const toActor = actorMap[step.to];
+      const ts = TYPE_ARROW[step.type] || TYPE_ARROW.internal;
+      const typeLabels = {http_request:'REQUEST',http_response:'RESPONSE',error:'ERROR',kafka_publish:'KAFKA PUB',kafka_consume:'KAFKA SUB',db_query:'DB QUERY',internal:'INTERNAL',external_api:'EXTERNAL API',cache_op:'CACHE',k8s_event:'K8S',git_op:'GIT',sync_op:'SYNC',ui_action:'UI ACTION'};
+      const annot = step.annotations?.length ? `<span style="margin-left:16px;color:var(--text-dim)">${step.annotations.slice(0,2).map(a => escapeHtml(a)).join(' · ')}</span>` : '';
+      dc.innerHTML = `<div style="display:flex;align-items:center;gap:12px;font-size:14px">
+        <span style="font-size:20px;font-weight:700;color:var(--cyan);min-width:32px">${step.n}</span>
+        <span style="padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;color:${ts.color};border:1px solid ${ts.color}40">${typeLabels[step.type] || step.type}</span>
+        <span style="color:${fromActor ? getActorColor(fromActor) : 'var(--text)'};font-weight:500">${escapeHtml(fromActor?.label || step.from)}</span>
+        <i class="ti ti-arrow-right" style="color:var(--text-dim)"></i>
+        <span style="color:${toActor ? getActorColor(toActor) : 'var(--text)'};font-weight:500">${escapeHtml(toActor?.label || step.to)}</span>
+        <span style="color:var(--text);flex:1">${escapeHtml(step.action)}</span>
+        ${step.duration ? `<span style="color:var(--text-dim);font-size:12px"><i class="ti ti-clock" style="margin-right:3px"></i>${formatDuration(step.duration)}</span>` : ''}
+        ${annot}
       </div>`;
     } else {
       dc.innerHTML = '';
@@ -1451,7 +1473,8 @@ function updateSpeedButtons() {
 
 // ── Log Panel ──
 function clearLog() {
-  document.getElementById('log-panel').innerHTML = '<div style="color:var(--text-dim);font-size:11px">[ Synapse Flow Simulator -- 로그 패널 ]</div>';
+  document.getElementById('log-left').innerHTML = '<div style="color:var(--text-dim);font-size:11px">[ Synapse Flow Simulator -- 로그 패널 ]</div>';
+  document.getElementById('log-right').innerHTML = '';
 }
 
 function logStep(idx) {
@@ -1473,12 +1496,48 @@ function logStep(idx) {
   const topicStr = step.topic ? ` [${step.topic}]` : '';
   const icon = typeIcons[type] || 'ti-point';
 
+  const ll = document.getElementById('log-left');
   const entry = document.createElement('div');
   entry.className = 'log-entry';
   entry.style.animation = 'fadeInUp .2s ease';
   entry.innerHTML = `<span class="log-n">#${String(step.n).padStart(2, '0')}</span><span class="log-time">${time}</span><i class="ti ${icon}" style="font-size:11px;margin-right:4px;color:${(TYPE_ARROW[type]||TYPE_ARROW.internal).color}"></i><span class="log-dir ${dir}">${dirLabel}</span><span class="log-action">${escapeHtml(step.from)} → ${escapeHtml(step.to)}: ${escapeHtml(step.action)}${topicStr}</span>`;
-  lp.appendChild(entry);
-  lp.scrollTop = lp.scrollHeight;
+  ll.appendChild(entry);
+  ll.scrollTop = ll.scrollHeight;
+
+  // Step explanation panel (learn/reference modes)
+  updateStepExplain(step);
+}
+
+function updateStepExplain(step) {
+  const lr = document.getElementById('log-right');
+  if (!lr || currentMode === 'presentation') return;
+
+  const fromActor = actorMap[step.from];
+  const toActor = actorMap[step.to];
+  const typeLabels = {http_request:'HTTP 요청',http_response:'HTTP 응답',error:'에러',kafka_publish:'Kafka 발행',kafka_consume:'Kafka 구독',db_query:'DB 쿼리',internal:'내부 처리',external_api:'외부 API',cache_op:'캐시 연산',k8s_event:'K8s 이벤트',git_op:'Git 작업',sync_op:'동기화',ui_action:'사용자 액션'};
+  const typeDesc = {
+    http_request: `<strong>${escapeHtml(fromActor?.label||step.from)}</strong>이(가) <strong>${escapeHtml(toActor?.label||step.to)}</strong>에 요청을 보냅니다.`,
+    http_response: `<strong>${escapeHtml(fromActor?.label||step.from)}</strong>이(가) 요청에 대한 응답을 반환합니다.`,
+    error: `오류가 발생했습니다. <strong>${escapeHtml(fromActor?.label||step.from)}</strong>에서 <strong>${escapeHtml(toActor?.label||step.to)}</strong>으로 에러가 전파됩니다.`,
+    kafka_publish: `<strong>${escapeHtml(fromActor?.label||step.from)}</strong>이(가) 이벤트를 Kafka 토픽에 발행합니다. 구독자들이 비동기로 처리합니다.`,
+    kafka_consume: `<strong>${escapeHtml(toActor?.label||step.to)}</strong>이(가) Kafka 토픽에서 이벤트를 구독하여 처리합니다.`,
+    db_query: `<strong>${escapeHtml(fromActor?.label||step.from)}</strong>이(가) 데이터베이스에 쿼리를 실행합니다.`,
+    internal: `<strong>${escapeHtml(fromActor?.label||step.from)}</strong> 내부에서 처리가 진행됩니다.`,
+    external_api: `<strong>${escapeHtml(fromActor?.label||step.from)}</strong>이(가) 외부 서비스 <strong>${escapeHtml(toActor?.label||step.to)}</strong>에 API를 호출합니다.`,
+    cache_op: `<strong>${escapeHtml(fromActor?.label||step.from)}</strong>이(가) 캐시에 데이터를 읽거나 씁니다.`,
+    ui_action: `사용자가 <strong>${escapeHtml(toActor?.label||step.to)}</strong> 화면에서 인터랙션합니다.`
+  };
+  const desc = typeDesc[step.type] || `<strong>${escapeHtml(fromActor?.label||step.from)}</strong>에서 <strong>${escapeHtml(toActor?.label||step.to)}</strong>으로 통신합니다.`;
+  const guideHtml = step.guide ? `<div style="margin-top:var(--sp-2);padding:var(--sp-2);background:var(--bg-card);border-radius:4px;border-left:2px solid var(--teal);color:var(--text);font-size:12px;line-height:1.6">${escapeHtml(step.guide)}</div>` : '';
+  const annotHtml = step.annotations?.length ? `<div class="step-explain-meta">${step.annotations.map(a => escapeHtml(a)).join(' · ')}</div>` : '';
+
+  lr.innerHTML = `<div class="step-explain-title">Step ${step.n} — ${typeLabels[step.type] || step.type}</div>
+    <div class="step-explain-body">${desc}</div>
+    <div style="margin-top:var(--sp-1);font-size:12px;color:var(--text)">${escapeHtml(step.action)}</div>
+    ${step.topic ? `<div style="margin-top:var(--sp-1);font-size:11px;color:var(--purple)"><i class="ti ti-broadcast" style="margin-right:4px"></i>${escapeHtml(step.topic)}</div>` : ''}
+    ${step.duration ? `<div style="margin-top:var(--sp-1);font-size:11px;color:var(--text-dim)"><i class="ti ti-clock" style="margin-right:4px"></i>${formatDuration(step.duration)}</div>` : ''}
+    ${guideHtml}
+    ${annotHtml}`;
 }
 
 // ── Helpers ──
