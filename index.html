@@ -640,9 +640,16 @@ async function init() {
   }
 }
 
+function scenarioHasScreenActors(sc) {
+  return sc.actors.some(aid => { const a = actorMap[aid]; return a && a.kind === 'screen'; }) ||
+         sc.steps.some(s => { const a = actorMap[s.to]; return a && a.kind === 'screen'; });
+}
+
 function filterScenarios() {
   const q = searchQuery.toLowerCase().trim();
   return data.scenarios.filter(sc => {
+    // UX view: only show scenarios with screen actors
+    if (currentView === 'ux' && !scenarioHasScreenActors(sc)) return false;
     if (q) {
       const searchable = [sc.title, sc.description, ...(sc.ui?.tags || []), sc.id, sc.category].join(' ').toLowerCase();
       if (!searchable.includes(q)) return false;
@@ -656,7 +663,7 @@ function filterScenarios() {
 
 function renderSidebar() {
   const sb = document.getElementById('sidebar');
-  const hasFilters = searchQuery || activeFilters.categories.length || activeFilters.statuses.length || activeFilters.priorities.length;
+  const hasFilters = searchQuery || activeFilters.categories.length || activeFilters.statuses.length || activeFilters.priorities.length || currentView === 'ux';
   const filtered = hasFilters ? filterScenarios() : data.scenarios;
   const filteredIds = new Set(filtered.map(s => s.id));
 
@@ -787,6 +794,7 @@ function switchView(view) {
   document.getElementById('tab-arch').classList.toggle('active', view === 'arch');
   document.getElementById('tab-seq').classList.toggle('active', view === 'seq');
   document.getElementById('tab-ux').classList.toggle('active', view === 'ux');
+  renderSidebar();
   if (currentScenario) renderView();
   updateHash();
 }
