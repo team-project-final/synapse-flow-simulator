@@ -257,7 +257,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 .app.mode-presentation .log-panel{display:none}
 .app.mode-presentation .main-view{grid-column:1/-1}
 .app.mode-presentation .scenario-title-overlay{position:absolute;top:var(--sp-4);left:50%;transform:translateX(-50%);font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:var(--text);z-index:5;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,.5)}
-.app.mode-reference{grid-template-columns:300px 1fr var(--detail-w)}
+.app.mode-learn{grid-template-rows:var(--header-h) 1fr 220px}
+.app.mode-reference{grid-template-columns:300px 1fr var(--detail-w);grid-template-rows:var(--header-h) 1fr 220px}
 .app.mode-reference .sidebar{width:300px}
 
 /* Smooth transitions */
@@ -1530,33 +1531,52 @@ function logStep(idx) {
 function updateStepExplain(step) {
   const lr = document.getElementById('log-right');
   if (!lr || currentMode === 'presentation') return;
-
   const fromActor = actorMap[step.from];
   const toActor = actorMap[step.to];
-  const typeLabels = {http_request:'HTTP 요청',http_response:'HTTP 응답',error:'에러',kafka_publish:'Kafka 발행',kafka_consume:'Kafka 구독',db_query:'DB 쿼리',internal:'내부 처리',external_api:'외부 API',cache_op:'캐시 연산',k8s_event:'K8s 이벤트',git_op:'Git 작업',sync_op:'동기화',ui_action:'사용자 액션'};
-  const typeDesc = {
-    http_request: `<strong>${escapeHtml(fromActor?.label||step.from)}</strong>이(가) <strong>${escapeHtml(toActor?.label||step.to)}</strong>에 요청을 보냅니다.`,
-    http_response: `<strong>${escapeHtml(fromActor?.label||step.from)}</strong>이(가) 요청에 대한 응답을 반환합니다.`,
-    error: `오류가 발생했습니다. <strong>${escapeHtml(fromActor?.label||step.from)}</strong>에서 <strong>${escapeHtml(toActor?.label||step.to)}</strong>으로 에러가 전파됩니다.`,
-    kafka_publish: `<strong>${escapeHtml(fromActor?.label||step.from)}</strong>이(가) 이벤트를 Kafka 토픽에 발행합니다. 구독자들이 비동기로 처리합니다.`,
-    kafka_consume: `<strong>${escapeHtml(toActor?.label||step.to)}</strong>이(가) Kafka 토픽에서 이벤트를 구독하여 처리합니다.`,
-    db_query: `<strong>${escapeHtml(fromActor?.label||step.from)}</strong>이(가) 데이터베이스에 쿼리를 실행합니다.`,
-    internal: `<strong>${escapeHtml(fromActor?.label||step.from)}</strong> 내부에서 처리가 진행됩니다.`,
-    external_api: `<strong>${escapeHtml(fromActor?.label||step.from)}</strong>이(가) 외부 서비스 <strong>${escapeHtml(toActor?.label||step.to)}</strong>에 API를 호출합니다.`,
-    cache_op: `<strong>${escapeHtml(fromActor?.label||step.from)}</strong>이(가) 캐시에 데이터를 읽거나 씁니다.`,
-    ui_action: `사용자가 <strong>${escapeHtml(toActor?.label||step.to)}</strong> 화면에서 인터랙션합니다.`
+  const fLabel = escapeHtml(fromActor?.label||step.from);
+  const tLabel = escapeHtml(toActor?.label||step.to);
+  const typeLabels = {http_request:'HTTP 요청',http_response:'HTTP 응답',error:'에러 발생',kafka_publish:'Kafka 이벤트 발행',kafka_consume:'Kafka 이벤트 구독',db_query:'데이터베이스 쿼리',internal:'내부 처리',external_api:'외부 API 호출',cache_op:'캐시 연산',k8s_event:'Kubernetes 이벤트',git_op:'Git 작업',sync_op:'동기화 작업',ui_action:'사용자 인터랙션'};
+  const typeTheory = {
+    http_request: `<strong>동기 통신</strong> — 클라이언트가 서버에 HTTP 요청을 보내고 응답을 기다립니다. REST API의 기본 패턴이며, 요청-응답이 쌍으로 이루어집니다. <strong>${fLabel}</strong>이(가) <strong>${tLabel}</strong>에 요청을 전송합니다.`,
+    http_response: `<strong>응답 반환</strong> — 서버가 처리 결과를 클라이언트에 돌려줍니다. HTTP 상태 코드(200, 401, 500 등)로 성공/실패를 구분합니다. <strong>${fLabel}</strong>이(가) <strong>${tLabel}</strong>에 응답합니다.`,
+    error: `<strong>에러 전파</strong> — 시스템에서 오류가 발생했습니다. 에러는 호출 체인을 따라 상위로 전파되며, 각 계층에서 적절한 에러 코드와 메시지로 변환됩니다.`,
+    kafka_publish: `<strong>이벤트 드리븐 아키텍처</strong> — <strong>${fLabel}</strong>이(가) Kafka 토픽에 이벤트를 발행합니다. 발행자는 구독자를 알 필요 없이(느슨한 결합) 이벤트만 발행하고, 구독자들이 비동기로 각자 처리합니다.`,
+    kafka_consume: `<strong>비동기 이벤트 처리</strong> — <strong>${tLabel}</strong>이(가) Kafka 토픽을 구독하여 이벤트를 수신합니다. Consumer Group으로 병렬 처리가 가능하며, 오프셋 관리로 메시지 유실을 방지합니다.`,
+    db_query: `<strong>영속성 계층</strong> — <strong>${fLabel}</strong>이(가) 데이터베이스에 쿼리를 실행합니다. ACID 트랜잭션으로 데이터 정합성을 보장하며, 인덱스를 활용해 조회 성능을 최적화합니다.`,
+    internal: `<strong>서비스 내부 로직</strong> — <strong>${fLabel}</strong> 내부에서 비즈니스 로직이 실행됩니다. 외부 통신 없이 서비스 자체에서 데이터 변환, 검증, 또는 연산을 수행합니다.`,
+    external_api: `<strong>외부 서비스 연동</strong> — <strong>${fLabel}</strong>이(가) 외부 서비스 <strong>${tLabel}</strong>에 API를 호출합니다. 외부 시스템은 가용성을 보장할 수 없으므로 타임아웃, 재시도, 폴백 전략이 필요합니다.`,
+    cache_op: `<strong>캐시 계층</strong> — <strong>${fLabel}</strong>이(가) 인메모리 캐시에 접근합니다. 자주 조회되는 데이터를 DB 대신 캐시에서 읽어 응답 속도를 높이고, TTL로 데이터 신선도를 관리합니다.`,
+    k8s_event: `<strong>컨테이너 오케스트레이션</strong> — Kubernetes 클러스터에서 파드, 디플로이먼트 등의 상태 변경 이벤트가 발생합니다. 자동 스케일링과 셀프 힐링의 기반이 됩니다.`,
+    git_op: `<strong>GitOps</strong> — Git 저장소를 단일 진실의 원천(Single Source of Truth)으로 사용하여 인프라와 애플리케이션 상태를 선언적으로 관리합니다.`,
+    sync_op: `<strong>동기화 작업</strong> — 시스템 간 상태를 일치시키는 조정(reconciliation) 작업입니다. 선언된 상태와 실제 상태의 차이를 해소합니다.`,
+    ui_action: `<strong>사용자 인터랙션</strong> — 사용자가 <strong>${tLabel}</strong> 화면에서 직접 조작합니다. UI 액션은 백엔드 API 호출을 트리거하거나 화면 전환을 발생시킵니다.`
   };
-  const desc = typeDesc[step.type] || `<strong>${escapeHtml(fromActor?.label||step.from)}</strong>에서 <strong>${escapeHtml(toActor?.label||step.to)}</strong>으로 통신합니다.`;
-  const guideHtml = step.guide ? `<div style="margin-top:var(--sp-2);padding:var(--sp-2);background:var(--bg-card);border-radius:4px;border-left:2px solid var(--teal);color:var(--text);font-size:12px;line-height:1.6">${escapeHtml(step.guide)}</div>` : '';
-  const annotHtml = step.annotations?.length ? `<div class="step-explain-meta">${step.annotations.map(a => escapeHtml(a)).join(' · ')}</div>` : '';
-
-  lr.innerHTML = `<div class="step-explain-title">Step ${step.n} — ${typeLabels[step.type] || step.type}</div>
-    <div class="step-explain-body">${desc}</div>
-    <div style="margin-top:var(--sp-1);font-size:12px;color:var(--text)">${escapeHtml(step.action)}</div>
-    ${step.topic ? `<div style="margin-top:var(--sp-1);font-size:11px;color:var(--purple)"><i class="ti ti-broadcast" style="margin-right:4px"></i>${escapeHtml(step.topic)}</div>` : ''}
-    ${step.duration ? `<div style="margin-top:var(--sp-1);font-size:11px;color:var(--text-dim)"><i class="ti ti-clock" style="margin-right:4px"></i>${formatDuration(step.duration)}</div>` : ''}
-    ${guideHtml}
-    ${annotHtml}`;
+  const theory = typeTheory[step.type] || `<strong>${fLabel}</strong>에서 <strong>${tLabel}</strong>으로 통신이 이루어집니다.`;
+  let payloadHtml = '';
+  if (step.payload) {
+    const keys = Object.keys(step.payload).slice(0, 4);
+    payloadHtml = `<div style="margin-top:var(--sp-2);padding:var(--sp-2);background:var(--bg);border-radius:4px;font-size:11px;font-family:monospace;color:var(--text-dim);border:1px solid var(--border)">` +
+      keys.map(k => `<span style="color:var(--cyan)">${escapeHtml(k)}</span>: <span style="color:var(--text-muted)">${escapeHtml(String(step.payload[k]).slice(0,40))}</span>`).join('<br>') +
+      (Object.keys(step.payload).length > 4 ? `<br><span style="color:var(--text-dim)">... +${Object.keys(step.payload).length - 4}</span>` : '') + '</div>';
+  }
+  let topicHtml = '';
+  if (step.topic) {
+    const topicData = data.topics?.find(t => t.name === step.topic);
+    topicHtml = `<div style="margin-top:var(--sp-2);padding:var(--sp-2);background:rgba(179,157,219,.08);border-radius:4px;border-left:2px solid var(--purple)"><div style="font-size:11px;color:var(--purple);font-weight:600"><i class="ti ti-broadcast" style="margin-right:4px"></i>${escapeHtml(step.topic)}</div>${topicData ? `<div style="font-size:10px;color:var(--text-muted);margin-top:2px">발행: ${topicData.producers.join(', ')} | 구독: ${topicData.consumers.join(', ')}</div>` : ''}</div>`;
+  }
+  const guideHtml = step.guide ? `<div style="margin-top:var(--sp-2);padding:var(--sp-2) var(--sp-3);background:var(--bg-card);border-radius:4px;border-left:2px solid var(--teal);color:var(--text);font-size:12px;line-height:1.6"><i class="ti ti-bulb" style="color:var(--teal);margin-right:4px"></i>${escapeHtml(step.guide)}</div>` : '';
+  const annotHtml = step.annotations?.length ? `<div class="step-explain-meta"><i class="ti ti-tag" style="margin-right:4px;font-size:10px"></i>${step.annotations.map(a => escapeHtml(a)).join(' · ')}</div>` : '';
+  let durationHtml = '';
+  if (step.duration) {
+    const dur = step.duration;
+    const speed = dur < 50 ? '매우 빠름' : dur < 200 ? '빠름' : dur < 1000 ? '보통' : dur < 5000 ? '느림 (외부 의존)' : '매우 느림';
+    const speedColor = dur < 200 ? 'var(--green)' : dur < 1000 ? 'var(--text-muted)' : 'var(--amber)';
+    durationHtml = `<span style="font-size:10px;color:${speedColor};margin-left:8px">${formatDuration(dur)} · ${speed}</span>`;
+  }
+  lr.innerHTML = `<div class="step-explain-title"><span style="color:var(--cyan);font-size:14px;font-weight:700;margin-right:6px">${step.n}</span>${typeLabels[step.type] || step.type}${durationHtml}</div>
+    <div style="margin-top:var(--sp-1);font-size:13px;color:var(--text);font-weight:500">${escapeHtml(step.action)}</div>
+    <div class="step-explain-body" style="margin-top:var(--sp-2)">${theory}</div>
+    ${topicHtml}${payloadHtml}${guideHtml}${annotHtml}`;
 }
 
 // ── Helpers ──
