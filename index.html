@@ -876,11 +876,13 @@ function renderArchView() {
       if (visibleMembers.length < 2) return;
       const memberPositions = visibleMembers.map(m => positions[m]).filter(Boolean);
       if (memberPositions.length < 2) return;
-      const padding = 24;
-      const minX = Math.min(...memberPositions.map(p => p.x)) - 60 - padding;
-      const maxX = Math.max(...memberPositions.map(p => p.x)) + 60 + padding;
-      const minY = Math.min(...memberPositions.map(p => p.y)) - 30 - padding;
-      const maxY = Math.max(...memberPositions.map(p => p.y)) + 30 + padding;
+      const padding = 28;
+      const halfNodeW = 65; // half of actor-box min-width + padding
+      const halfNodeH = 40; // half of actor-box approx height
+      const minX = Math.min(...memberPositions.map(p => p.x)) - halfNodeW - padding;
+      const maxX = Math.max(...memberPositions.map(p => p.x)) + halfNodeW + padding;
+      const minY = Math.min(...memberPositions.map(p => p.y)) - halfNodeH - padding;
+      const maxY = Math.max(...memberPositions.map(p => p.y)) + halfNodeH + padding;
       const box = document.createElement('div');
       box.className = 'actor-group-box';
       box.style.cssText = `left:${minX}px;top:${minY}px;width:${maxX - minX}px;height:${maxY - minY}px`;
@@ -974,9 +976,13 @@ function drawArchArrow(currentStepObj, positions) {
 
       const mx = (from.x + to.x) / 2;
       const my = (from.y + to.y) / 2;
-      svgContent += `<text x="${mx}" y="${my - 8}" text-anchor="middle" fill="var(--text)" font-size="10" font-weight="500">${escapeHtml(truncate(currentStepObj.action, 40))}</text>`;
+      const labelText = escapeHtml(truncate(currentStepObj.action, 35));
+      const labelW = Math.min(labelText.length * 6, 220);
+      const labelH = currentStepObj.topic ? 28 : 16;
+      svgContent += `<rect x="${mx - labelW/2 - 4}" y="${my - 18}" width="${labelW + 8}" height="${labelH}" rx="4" fill="var(--bg)" fill-opacity="0.85"/>`;
+      svgContent += `<text x="${mx}" y="${my - 6}" text-anchor="middle" fill="var(--text)" font-size="10" font-weight="500">${labelText}</text>`;
       if (currentStepObj.topic) {
-        svgContent += `<text x="${mx}" y="${my + 6}" text-anchor="middle" fill="${ts.color}" font-size="9" opacity="0.7">${currentStepObj.topic.split('.').pop()}</text>`;
+        svgContent += `<text x="${mx}" y="${my + 8}" text-anchor="middle" fill="${ts.color}" font-size="9" opacity="0.7">${currentStepObj.topic.split('.').pop()}</text>`;
       }
     }
   }
