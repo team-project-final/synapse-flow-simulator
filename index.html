@@ -1102,10 +1102,25 @@ function renderSeqView() {
     mv.querySelector('.seq-view')?.prepend(overlay);
   }
 
+  // Auto-fit: calculate zoom to fit content in viewport
+  const contentW = actors.length * colW + 48;
+  const contentH = totalH + 60;
+  const mvRect2 = mv.getBoundingClientRect();
+  const fitZoomX = mvRect2.width / contentW;
+  const fitZoomY = mvRect2.height / contentH;
+  const fitZoom = Math.min(fitZoomX, fitZoomY);
+  if (fitZoom < 0.95 || fitZoom > 1.5) {
+    zoomLevel = Math.max(0.4, Math.min(1.5, fitZoom * 0.95));
+    panX = 0; panY = 0;
+    applyZoomPan();
+  } else {
+    zoomLevel = 1; panX = 0; panY = 0;
+  }
+
   // Scroll to current step
   const seqView = mv.querySelector('.seq-view');
   if (seqView) {
-    const targetY = mappedStep * rowH;
+    const targetY = mappedStep * rowH * zoomLevel;
     seqView.scrollTop = Math.max(0, targetY - 120);
   }
   renderMinimap();
