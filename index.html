@@ -113,7 +113,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 .arch-actors{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;padding:20px}
 .actor-box{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 14px;border-radius:10px;background:var(--bg-card);border:2px solid var(--border);min-width:100px;text-align:center;transition:transform .3s,box-shadow .3s,border-color .3s;cursor:default;z-index:3}
 .actor-box .actor-icon{font-size:22px;margin-bottom:4px}
-.actor-box .actor-label{font-size:11px;font-weight:600;white-space:nowrap}
+.actor-box .actor-label{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px}
 .actor-box .actor-kind{font-size:9px;color:var(--text-muted);margin-top:1px}
 .actor-box.active{transform:scale(1.05);animation:glowPulse 2s ease-in-out infinite}
 .actor-box.from-active{border-width:2px}
@@ -810,7 +810,15 @@ function renderArchView() {
     if (!rows[k]) rows[k] = [];
     rows[k].push(a);
   });
-  const orderedRows = kindOrder.filter(k => rows[k]).map(k => rows[k]);
+  // Split long rows: max 4 actors per visual row, wrap to next line
+  const maxPerRow = 4;
+  const visualRows = [];
+  kindOrder.filter(k => rows[k]).forEach(k => {
+    const actors = rows[k];
+    for (let i = 0; i < actors.length; i += maxPerRow) {
+      visualRows.push(actors.slice(i, i + maxPerRow));
+    }
+  });
 
   const allSteps = getFilteredSteps();
   const step = allSteps[Math.min(currentStep, allSteps.length - 1)];
@@ -818,17 +826,24 @@ function renderArchView() {
   const toId = step?.to;
 
   let html = '<div class="arch-view"><svg id="arch-svg"></svg><div class="arch-actors" id="arch-actors">';
-  const totalRows = orderedRows.length;
+  const totalRows = visualRows.length;
   const positions = {};
   const rect = mv.getBoundingClientRect();
   const areaW = rect.width - 40;
   const areaH = rect.height - 40;
+  const nodeW = 120; // approx actor box width
+  const padX = 60;
+  const padY = 40;
 
-  orderedRows.forEach((row, ri) => {
-    const y = totalRows === 1 ? areaH / 2 : 30 + (ri / (totalRows - 1)) * (areaH - 100);
+  visualRows.forEach((row, ri) => {
+    const y = totalRows === 1 ? areaH / 2 : padY + (ri / Math.max(1, totalRows - 1)) * (areaH - padY * 2 - 60);
+    const totalRowW = row.length * nodeW + (row.length - 1) * 20;
+    const startX = Math.max(padX, (areaW - totalRowW) / 2);
     row.forEach((actor, ci) => {
-      const x = row.length === 1 ? areaW / 2 : 40 + (ci / (row.length - 1)) * (areaW - 140);
-      positions[actor.id] = { x: x + 50, y: y + 30 };
+      const x = row.length === 1 ? areaW / 2 : startX + ci * (nodeW + 20);
+      const clampedX = Math.max(padX, Math.min(x, areaW - nodeW));
+      const clampedY = Math.max(padY, Math.min(y, areaH - 80));
+      positions[actor.id] = { x: clampedX + 50, y: clampedY + 30 };
       const color = getActorColor(actor);
       const isFrom = actor.id === fromId;
       const isTo = actor.id === toId;
@@ -842,7 +857,7 @@ function renderArchView() {
       const kindIcons = {client:'ti-device-desktop',screen:'ti-app-window',edge:'ti-network',service:'ti-server-2',datastore:'ti-database',broker:'ti-broadcast',external:'ti-cloud',ops:'ti-settings-automation',k8s:'ti-box'};
       const kindIcon = kindIcons[actor.kind] || actor.icon;
       const gradient = `linear-gradient(135deg, ${color}08, transparent)`;
-      html += `<div class="${cls.join(' ')}" style="left:${x}px;top:${y}px;border-color:${borderColor};--glow-color:${color}40;background:${gradient}" data-actor="${actor.id}">
+      html += `<div class="${cls.join(' ')}" style="left:${clampedX}px;top:${clampedY}px;border-color:${borderColor};--glow-color:${color}40;background:${gradient}" data-actor="${actor.id}">
         <i class="ti ${kindIcon} actor-icon" style="color:${color}"></i>
         <span class="actor-label">${actor.label}</span>
         <span class="actor-kind">${actor.kind}</span>
