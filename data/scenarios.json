@@ -54,6 +54,17 @@
     }
   ],
 
+  "actorGroups": [
+    { "id": "platform-group", "label": "Platform", "members": ["Platform", "PostgreSQL", "Redis"] },
+    { "id": "knowledge-group", "label": "Knowledge", "members": ["Knowledge", "pgvector", "Elasticsearch"] },
+    { "id": "learning-ai-group", "label": "Learning AI", "members": ["LearningAI", "ClaudeAPI", "OpenAIAPI"] },
+    { "id": "learning-card-group", "label": "Learning Card", "members": ["LearningCard"] },
+    { "id": "engagement-group", "label": "Engagement", "members": ["Engagement"] },
+    { "id": "messaging-group", "label": "Messaging", "members": ["Kafka", "SchemaRegistry"] },
+    { "id": "k8s-group", "label": "Kubernetes", "members": ["Pod", "Kubelet", "EKS"] },
+    { "id": "gitops-group", "label": "GitOps", "members": ["ArgoCD", "ImageUpdater", "ESO", "Git", "ECR", "GitHubActions"] }
+  ],
+
   "actors": [
     { "id": "Browser",         "label": "웹 브라우저",          "kind": "client",    "color": "gray",   "icon": "ti-browser" },
     { "id": "MobileApp",       "label": "모바일 앱 (Flutter)",  "kind": "client",    "color": "gray",   "icon": "ti-device-mobile" },

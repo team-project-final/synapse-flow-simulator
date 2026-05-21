@@ -117,6 +117,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 .actor-box .actor-kind{font-size:9px;color:var(--text-muted);margin-top:1px}
 .actor-box.active{transform:scale(1.05);animation:glowPulse 2s ease-in-out infinite}
 .actor-box.from-active{border-width:2px}
+.actor-group-box{position:absolute;border:1.5px dashed var(--border);border-radius:14px;z-index:0;pointer-events:none;transition:opacity .3s}
+.actor-group-label{position:absolute;top:-10px;left:12px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);background:var(--bg);padding:0 6px}
 .actor-box.to-active{border-width:2px}
 
 /* Sequence View */
@@ -849,6 +851,31 @@ function renderArchView() {
   });
   html += '</div></div>';
   mv.innerHTML = html;
+
+  // Draw actor group boxes
+  if (data.actorGroups) {
+    const actorIds = new Set(actors.map(a => a.id));
+    const archActors = document.getElementById('arch-actors');
+    data.actorGroups.forEach(group => {
+      const visibleMembers = group.members.filter(m => actorIds.has(m));
+      if (visibleMembers.length < 2) return;
+      const memberPositions = visibleMembers.map(m => positions[m]).filter(Boolean);
+      if (memberPositions.length < 2) return;
+      const padding = 24;
+      const minX = Math.min(...memberPositions.map(p => p.x)) - 60 - padding;
+      const maxX = Math.max(...memberPositions.map(p => p.x)) + 60 + padding;
+      const minY = Math.min(...memberPositions.map(p => p.y)) - 30 - padding;
+      const maxY = Math.max(...memberPositions.map(p => p.y)) + 30 + padding;
+      const box = document.createElement('div');
+      box.className = 'actor-group-box';
+      box.style.cssText = `left:${minX}px;top:${minY}px;width:${maxX - minX}px;height:${maxY - minY}px`;
+      const label = document.createElement('span');
+      label.className = 'actor-group-label';
+      label.textContent = group.label;
+      box.appendChild(label);
+      archActors.appendChild(box);
+    });
+  }
 
   // Presentation title overlay
   if (currentMode === 'presentation') {
