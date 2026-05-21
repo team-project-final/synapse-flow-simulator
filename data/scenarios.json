@@ -202,6 +202,51 @@
       "producers": ["LearningCard"],
       "consumers": ["Operator"],
       "description": "DLQ 패턴 — 모든 토픽에 {원본}.dlq 형식으로 자동 적용 (§8.7)"
+    },
+    {
+      "name": "engagement.community.deck-shared-v1",
+      "domain": "engagement", "event": "deck-shared", "version": 1,
+      "schema": "engagement/DeckShared.avsc",
+      "compatibility": "BACKWARD",
+      "producers": ["Engagement"],
+      "consumers": ["Platform", "Engagement"],
+      "description": "덱 공유 이벤트 — 그룹원 알림 + XP 적립 트리거"
+    },
+    {
+      "name": "engagement.gamification.streak-bonus-v1",
+      "domain": "engagement", "event": "streak-bonus", "version": 1,
+      "schema": "engagement/StreakBonus.avsc",
+      "compatibility": "BACKWARD",
+      "producers": ["Engagement"],
+      "consumers": ["Platform"],
+      "description": "연속 학습 스트릭 보너스 XP 이벤트"
+    },
+    {
+      "name": "platform.admin.report-resolved-v1",
+      "domain": "platform", "event": "report-resolved", "version": 1,
+      "schema": "platform/ReportResolved.avsc",
+      "compatibility": "BACKWARD",
+      "producers": ["Platform"],
+      "consumers": ["Platform"],
+      "description": "신고 처리 완료 — 신고자 결과 알림 발송"
+    },
+    {
+      "name": "platform.gdpr.export-completed-v1",
+      "domain": "platform", "event": "export-completed", "version": 1,
+      "schema": "platform/GdprExportCompleted.avsc",
+      "compatibility": "BACKWARD",
+      "producers": ["Platform"],
+      "consumers": ["Platform"],
+      "description": "GDPR 데이터 내보내기 완료 — 사용자에게 다운로드 링크 이메일 발송"
+    },
+    {
+      "name": "platform.account.deletion-scheduled-v1",
+      "domain": "platform", "event": "deletion-scheduled", "version": 1,
+      "schema": "platform/AccountDeletionScheduled.avsc",
+      "compatibility": "BACKWARD",
+      "producers": ["Platform"],
+      "consumers": ["Platform"],
+      "description": "계정 삭제 예약 — 30일 유예 후 hard delete Cron 트리거"
     }
   ],
 
