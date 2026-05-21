@@ -224,6 +224,11 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 .app.mode-reference{grid-template-columns:300px 1fr var(--detail-w)}
 .app.mode-reference .sidebar{width:300px}
 
+/* Zoom Controls */
+.zoom-controls{position:absolute;bottom:var(--sp-3);right:var(--sp-3);display:flex;flex-direction:column;gap:4px;z-index:6}
+.zoom-controls button{width:32px;height:32px;border-radius:6px;background:var(--bg-card);border:1px solid var(--border);color:var(--text);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s}
+.zoom-controls button:hover{background:var(--border)}
+
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-dim);gap:var(--sp-2)}
 .empty-state i{font-size:48px}
 .empty-state p{font-size:14px}
@@ -309,6 +314,10 @@ let currentView = 'arch';
 let selectedBranch = null;
 let currentMode = 'learn';
 let stepTrail = [];
+let zoomLevel = 1;
+let panX = 0, panY = 0;
+let isPanning = false;
+let panStartX = 0, panStartY = 0;
 let searchQuery = '';
 let activeFilters = { categories: [], statuses: [], priorities: [] };
 let debounceTimer = null;
@@ -389,6 +398,46 @@ function applyMode() {
   if (currentMode === 'presentation' && currentScenario && !isPlaying) {
     startPlay();
   }
+}
+
+// ── Zoom & Pan ──
+function resetZoom() {
+  zoomLevel = 1; panX = 0; panY = 0;
+  applyZoomPan();
+}
+function zoomIn() { zoomLevel = Math.min(3, zoomLevel * 1.2); applyZoomPan(); }
+function zoomOut() { zoomLevel = Math.max(0.5, zoomLevel / 1.2); applyZoomPan(); }
+function applyZoomPan() {
+  const container = document.querySelector('.arch-view, .seq-view');
+  if (!container) return;
+  const inner = container.querySelector('.arch-actors, .seq-lifeline-area');
+  const svg = container.querySelector('svg');
+  const transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+  [inner, svg].forEach(el => { if (el) { el.style.transform = transform; el.style.transformOrigin = '0 0'; }});
+}
+function initZoomPan() {
+  const mv = document.getElementById('main-view');
+  mv.addEventListener('wheel', e => {
+    if (currentView === 'ux') return;
+    e.preventDefault();
+    if (e.deltaY < 0) zoomIn(); else zoomOut();
+  }, { passive: false });
+  mv.addEventListener('mousedown', e => {
+    if (currentView === 'ux' || e.button !== 0) return;
+    isPanning = true;
+    panStartX = e.clientX - panX;
+    panStartY = e.clientY - panY;
+    mv.style.cursor = 'grabbing';
+  });
+  window.addEventListener('mousemove', e => {
+    if (!isPanning) return;
+    panX = e.clientX - panStartX;
+    panY = e.clientY - panStartY;
+    applyZoomPan();
+  });
+  window.addEventListener('mouseup', () => {
+    if (isPanning) { isPanning = false; document.getElementById('main-view').style.cursor = ''; }
+  });
 }
 
 // ── Init ──
@@ -532,6 +581,7 @@ function selectScenario(id) {
   addRecentScenario(sc.id);
   currentStep = 0;
   selectedBranch = null;
+  resetZoom();
   stopPlay();
   clearLog();
   document.querySelectorAll('.sc-item').forEach(el => el.classList.toggle('active', el.dataset.id === id));
@@ -617,6 +667,14 @@ function renderArchView() {
     overlay.className = 'scenario-title-overlay';
     overlay.textContent = currentScenario.title;
     mv.querySelector('.arch-view')?.prepend(overlay);
+  }
+
+  // Add zoom controls
+  if (currentMode !== 'presentation') {
+    const zc = document.createElement('div');
+    zc.className = 'zoom-controls';
+    zc.innerHTML = `<button onclick="zoomIn()" title="확대" aria-label="확대"><i class="ti ti-plus"></i></button><button onclick="zoomOut()" title="축소" aria-label="축소"><i class="ti ti-minus"></i></button><button onclick="resetZoom()" title="맞추기" aria-label="화면 맞추기"><i class="ti ti-arrows-maximize"></i></button>`;
+    mv.appendChild(zc);
   }
 
   // Draw arrow
@@ -779,6 +837,14 @@ function renderSeqView() {
       <svg class="seq-arrow-svg" style="width:${actors.length * colW}px;height:${totalH}px">${svgLines}</svg>
     </div>
   </div>`;
+
+  // Add zoom controls
+  if (currentMode !== 'presentation') {
+    const zc = document.createElement('div');
+    zc.className = 'zoom-controls';
+    zc.innerHTML = `<button onclick="zoomIn()" title="확대" aria-label="확대"><i class="ti ti-plus"></i></button><button onclick="zoomOut()" title="축소" aria-label="축소"><i class="ti ti-minus"></i></button><button onclick="resetZoom()" title="맞추기" aria-label="화면 맞추기"><i class="ti ti-arrows-maximize"></i></button>`;
+    mv.appendChild(zc);
+  }
 
   // Presentation title overlay
   if (currentMode === 'presentation') {
@@ -1224,6 +1290,7 @@ window.addEventListener('resize', () => {
 // ── Boot ──
 initColors();
 initMode();
+initZoomPan();
 init();
 </script>
 </body>
