@@ -67,6 +67,11 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 .sidebar .search-icon{position:absolute;left:calc(var(--sp-3) + 8px);top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:14px;pointer-events:none}
 .sidebar .search-clear{position:absolute;right:calc(var(--sp-3) + 6px);top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:14px;cursor:pointer;display:none;background:none;border:none;padding:2px}
 .sidebar .search-clear.visible{display:block}
+.sidebar .sc-item .sc-meta{display:flex;gap:4px;align-items:center;margin-top:2px}
+.sidebar .sc-item .sc-tag{font-size:9px;padding:0 4px;border-radius:3px;background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim)}
+.sidebar .sc-item .sc-steps{font-size:10px;color:var(--text-dim)}
+.sidebar .recent-section{padding:0 var(--sp-3) var(--sp-1);margin-bottom:var(--sp-1);border-bottom:1px solid var(--border)}
+.sidebar .recent-label{font-size:10px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:var(--sp-1)}
 .sidebar .filter-area{padding:0 var(--sp-3) var(--sp-2);display:flex;flex-wrap:wrap;gap:4px}
 .sidebar .filter-chip{padding:2px 8px;border-radius:12px;font-size:10px;font-weight:500;border:1px solid var(--border);background:var(--bg);color:var(--text-muted);cursor:pointer;transition:.15s;white-space:nowrap;font-family:inherit}
 .sidebar .filter-chip:hover{border-color:var(--text-muted)}
@@ -265,6 +270,20 @@ let searchQuery = '';
 let activeFilters = { categories: [], statuses: [], priorities: [] };
 let debounceTimer = null;
 
+function getRecentScenarios() {
+  try {
+    const raw = sessionStorage.getItem('recent-scenarios');
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function addRecentScenario(id) {
+  let recent = getRecentScenarios().filter(r => r !== id);
+  recent.unshift(id);
+  if (recent.length > 3) recent = recent.slice(0, 3);
+  sessionStorage.setItem('recent-scenarios', JSON.stringify(recent));
+}
+
 // ── Color Maps (read from CSS custom properties) ──
 function cssVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -354,6 +373,19 @@ function renderSidebar() {
   }
   html += '</div>';
 
+  // Recent scenarios
+  const recentIds = getRecentScenarios();
+  const recentScenarios = recentIds.map(id => data.scenarios.find(s => s.id === id)).filter(Boolean);
+  if (recentScenarios.length > 0 && !searchQuery && !totalActive) {
+    html += '<div class="recent-section"><div class="recent-label">최근</div>';
+    recentScenarios.forEach(sc => {
+      html += `<button class="sc-item ${currentScenario?.id === sc.id ? 'active' : ''}" data-id="${sc.id}" onclick="selectScenario('${sc.id}')" type="button" style="padding-left:var(--sp-3)">
+        <span class="status-dot status-${sc.status}" title="${sc.status}"></span>${escapeHtml(sc.title)}
+      </button>`;
+    });
+    html += '</div>';
+  }
+
   // Scenario list
   if (filtered.length === 0) {
     html += '<div class="no-results"><p>검색 결과 없음</p><button onclick="clearSearch()">필터 초기화</button></div>';
@@ -365,9 +397,13 @@ function renderSidebar() {
       html += `<div class="cat-group"><div class="cat-header"><span class="cat-dot" style="background:${catColor}"></span>${cat.label}</div>`;
       catScenarios.forEach(sc => {
         const stepCount = sc.steps.length;
+        const tags = (sc.ui?.tags || []).slice(0, 3);
         html += `<button class="sc-item ${currentScenario?.id === sc.id ? 'active' : ''}" data-id="${sc.id}" onclick="selectScenario('${sc.id}')" type="button">
-          <span class="status-dot status-${sc.status}" title="${sc.status}"></span>${highlightMatch(sc.title, searchQuery)}
-          <span style="float:right;font-size:10px;color:var(--text-dim)">${stepCount}</span>
+          <div><span class="status-dot status-${sc.status}" title="${sc.status}"></span>${highlightMatch(sc.title, searchQuery)}</div>
+          <div class="sc-meta">
+            ${tags.map(t => `<span class="sc-tag">${escapeHtml(t)}</span>`).join('')}
+            <span class="sc-steps">${stepCount}steps</span>
+          </div>
         </button>`;
       });
       html += '</div>';
@@ -416,6 +452,7 @@ function selectScenario(id) {
   const sc = data.scenarios.find(s => s.id === id);
   if (!sc) return;
   currentScenario = sc;
+  addRecentScenario(sc.id);
   currentStep = 0;
   selectedBranch = null;
   stopPlay();
