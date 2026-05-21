@@ -211,6 +211,19 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
 .ux-api-badge.active{border-color:var(--blue);color:var(--blue);animation:glowPulse 2s ease-in-out infinite;--glow-color:rgba(79,195,247,.15)}
 .ux-connector{display:flex;align-items:center;flex-shrink:0;color:var(--text-dim);font-size:18px;margin:0 -4px}
 
+/* Mode System */
+.mode-switcher{display:flex;gap:2px;background:var(--bg-tertiary);border-radius:8px;padding:2px;margin-left:var(--sp-3)}
+.mode-switcher button{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:500;transition:.15s;white-space:nowrap;min-height:28px;display:inline-flex;align-items:center;gap:4px}
+.mode-switcher button.active{background:rgba(79,195,247,.15);color:var(--cyan)}
+.app.mode-presentation{grid-template-columns:0 1fr 0;grid-template-rows:var(--header-h) 1fr 0}
+.app.mode-presentation .sidebar{transform:translateX(-100%);position:fixed;z-index:20}
+.app.mode-presentation .detail-panel{position:fixed;bottom:0;left:0;right:0;height:auto;max-height:60px;padding:var(--sp-2) var(--sp-4);border-left:none;border-top:1px solid var(--border);z-index:10;overflow:hidden;grid-row:auto;top:auto;width:100%}
+.app.mode-presentation .log-panel{display:none}
+.app.mode-presentation .main-view{grid-column:1/-1}
+.app.mode-presentation .scenario-title-overlay{position:absolute;top:var(--sp-4);left:50%;transform:translateX(-50%);font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:var(--text);z-index:5;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+.app.mode-reference{grid-template-columns:300px 1fr var(--detail-w)}
+.app.mode-reference .sidebar{width:300px}
+
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-dim);gap:var(--sp-2)}
 .empty-state i{font-size:48px}
 .empty-state p{font-size:14px}
@@ -231,6 +244,11 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(
       <button id="tab-arch" class="active" onclick="switchView('arch')">아키텍처 뷰</button>
       <button id="tab-seq" onclick="switchView('seq')">시퀀스 뷰</button>
       <button id="tab-ux" onclick="switchView('ux')">사용자 경험 뷰</button>
+    </div>
+    <div class="mode-switcher">
+      <button data-mode="learn" onclick="setMode('learn')">📖 학습</button>
+      <button data-mode="presentation" onclick="setMode('presentation')">🎬 발표</button>
+      <button data-mode="reference" onclick="setMode('reference')">🔍 레퍼런스</button>
     </div>
     <div class="nav-controls">
       <button id="btn-prev" onclick="prevStep()" title="이전 (←)" aria-label="이전 단계"><i class="ti ti-chevron-left"></i></button>
@@ -289,6 +307,7 @@ let playInterval = null;
 let playSpeed = 2000;
 let currentView = 'arch';
 let selectedBranch = null;
+let currentMode = 'learn';
 let searchQuery = '';
 let activeFilters = { categories: [], statuses: [], priorities: [] };
 let debounceTimer = null;
@@ -335,6 +354,40 @@ function initColors() {
 function getActorColor(actor) {
   if (actor.kind === 'service') return COLOR_MAP[actor.color] || '#3b82f6';
   return KIND_COLORS[actor.kind] || '#6b7280';
+}
+
+// ── Mode System ──
+function initMode() {
+  const hash = window.location.hash;
+  const modeMatch = hash.match(/mode=(learn|presentation|reference)/);
+  if (modeMatch) currentMode = modeMatch[1];
+  else {
+    const saved = sessionStorage.getItem('simulator-mode');
+    if (saved && ['learn', 'presentation', 'reference'].includes(saved)) currentMode = saved;
+  }
+  applyMode();
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  sessionStorage.setItem('simulator-mode', mode);
+  applyMode();
+  if (currentScenario) {
+    renderView();
+    renderDetail();
+  }
+}
+
+function applyMode() {
+  const app = document.querySelector('.app');
+  app.classList.remove('mode-learn', 'mode-presentation', 'mode-reference');
+  app.classList.add('mode-' + currentMode);
+  document.querySelectorAll('.mode-switcher button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === currentMode);
+  });
+  if (currentMode === 'presentation' && currentScenario && !isPlaying) {
+    startPlay();
+  }
 }
 
 // ── Init ──
@@ -557,6 +610,14 @@ function renderArchView() {
   html += '</div></div>';
   mv.innerHTML = html;
 
+  // Presentation title overlay
+  if (currentMode === 'presentation') {
+    const overlay = document.createElement('div');
+    overlay.className = 'scenario-title-overlay';
+    overlay.textContent = currentScenario.title;
+    mv.querySelector('.arch-view')?.prepend(overlay);
+  }
+
   // Draw arrow
   requestAnimationFrame(() => drawArchArrow(step, positions));
 }
@@ -696,6 +757,14 @@ function renderSeqView() {
     </div>
   </div>`;
 
+  // Presentation title overlay
+  if (currentMode === 'presentation') {
+    const overlay = document.createElement('div');
+    overlay.className = 'scenario-title-overlay';
+    overlay.textContent = currentScenario.title;
+    mv.querySelector('.seq-view')?.prepend(overlay);
+  }
+
   // Scroll to current step
   const seqView = mv.querySelector('.seq-view');
   if (seqView) {
@@ -805,6 +874,18 @@ function renderDetail() {
   const sc = currentScenario;
   const step = sc.steps[currentStep];
 
+  // Presentation mode: minimal detail
+  if (currentMode === 'presentation') {
+    if (step) {
+      dc.innerHTML = `<div style="font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+        <strong>${step.n}</strong> ${escapeHtml(step.action)}
+      </div>`;
+    } else {
+      dc.innerHTML = '';
+    }
+    return;
+  }
+
   let html = '';
 
   // Scenario info
@@ -848,10 +929,31 @@ function renderDetail() {
       html += `<div class="section"><h3>페이로드</h3><div class="payload-block">${escapeHtml(JSON.stringify(step.payload, null, 2))}</div></div>`;
     }
 
+    // Reference mode: Kafka topic details
+    if (currentMode === 'reference' && step.topic) {
+      const topicData = data.topics?.find(t => t.name === step.topic);
+      if (topicData) {
+        html += `<div class="section"><h3>토픽 상세</h3>
+          <div style="font-size:11px;color:var(--text-muted);line-height:1.6">
+            <div><strong>프로듀서:</strong> ${topicData.producers.join(', ')}</div>
+            <div><strong>컨슈머:</strong> ${topicData.consumers.join(', ')}</div>
+            <div><strong>호환성:</strong> ${topicData.compatibility}</div>
+            ${topicData.description ? `<div style="margin-top:4px">${escapeHtml(topicData.description)}</div>` : ''}
+          </div>
+        </div>`;
+      }
+    }
+
     // Annotations
     if (step.annotations?.length) {
       html += '<div class="section"><h3>주석</h3>';
-      step.annotations.forEach(a => html += `<div class="annotation">${escapeHtml(a)}</div>`);
+      step.annotations.forEach(a => {
+        if (currentMode === 'learn') {
+          html += `<div class="annotation" style="background:var(--bg);padding:var(--sp-2);border-radius:4px;border-left:3px solid var(--amber);margin-bottom:var(--sp-2)">${escapeHtml(a)}</div>`;
+        } else {
+          html += `<div class="annotation">${escapeHtml(a)}</div>`;
+        }
+      });
       html += '</div>';
     }
   }
@@ -1068,6 +1170,14 @@ document.addEventListener('keydown', e => {
     case 'ArrowLeft': e.preventDefault(); prevStep(); break;
     case ' ': e.preventDefault(); togglePlay(); break;
     case 'Home': e.preventDefault(); resetSteps(); break;
+    case 'f':
+    case 'F':
+      if (currentMode === 'presentation') {
+        e.preventDefault();
+        if (document.fullscreenElement) document.exitFullscreen();
+        else document.documentElement.requestFullscreen();
+      }
+      break;
     case 'k':
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
@@ -1087,6 +1197,7 @@ window.addEventListener('resize', () => {
 
 // ── Boot ──
 initColors();
+initMode();
 init();
 </script>
 </body>
